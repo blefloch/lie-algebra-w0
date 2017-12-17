@@ -1,7 +1,8 @@
 # lie-algebra-w0
+
 In the study of conjectures by Auslander and by Milnor on flat affine
 manifolds, the following problem on irreducible representations of
-simple Lie groups (over *C*) shows up.
+simple Lie groups (over **C**) shows up.
 
 Let V be an irreducible representation (of highest weight λ) of a simple
 Lie group G, and let V_0 be the zero-weight subspace.  Let w_0 be the
