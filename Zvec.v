@@ -8,6 +8,9 @@ Require Import Rewriting.
 Require Import ListExtras.
 Open Scope nat_scope.
 
+(*TODO: look up split, combine*)
+(*TODO: look up "fold"*)
+
 Section functions.
   Fixpoint Zvec_total lambda :=
     match lambda with

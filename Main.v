@@ -1,3 +1,8 @@
+(* To compile, do
+
+   coqc ListExtras.v Rewriting.v Zvec.v SimpleLieAlgebras.v Data.v
+   coqc TypeAll.v TypeA.v TypeBD.v TypeC.v TypeEFG.v Main.v
+*)
 Require Import Setoid.
 Require Import Bool.
 Require Import List.
@@ -36,6 +41,3 @@ Proof.
   - refine (thm_main_F4 _ _ _ Hrad) ; firstorder.
   - refine (thm_main_G2 _ _ _ Hrad) ; firstorder.
 Qed.
-
-(*TODO: look up split, combine*)
-(*TODO: look up "fold"*)
