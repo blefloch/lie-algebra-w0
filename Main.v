@@ -1,6 +1,6 @@
 (* To compile, do
 
-   coqc ListExtras.v Rewriting.v Zvec.v SimpleLieAlgebras.v Data.v
+   coqc ListExtras.v Tools.v Zvec.v SimpleLieAlgebras.v Data.v
    coqc TypeAll.v TypeA.v TypeBD.v TypeC.v TypeEFG.v Main.v
 *)
 Require Import Setoid.
@@ -9,7 +9,7 @@ Require Import List.
 Require Import ZArith.
 Require Import Nat.
 (*Load our files*)
-Require Import Rewriting.
+Require Import Tools.
 Require Import ListExtras.
 Require Import Zvec.
 Require Import SimpleLieAlgebras.

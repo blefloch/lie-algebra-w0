@@ -4,7 +4,7 @@ Require Import List.
 Require Import ZArith.
 Require Import Nat.
 (*Load our files*)
-Require Import Rewriting.
+Require Import Tools.
 Require Import ListExtras.
 Require Import Zvec.
 Open Scope nat_scope.
