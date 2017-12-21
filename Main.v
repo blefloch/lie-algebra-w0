@@ -1,7 +1,6 @@
 (* To compile, do
 
-   coqc ListExtras.v Tools.v Zvec.v SimpleLieAlgebras.v Data.v
-   coqc TypeAll.v TypeA.v TypeBD.v TypeC.v TypeEFG.v Main.v
+   coqc ListExtras.v Tools.v Zvec.v SimpleLieAlgebras.v Data.v TypeAll.v TypeA.v TypeBD.v TypeC.v TypeEFG.v Main.v
 *)
 Require Import Setoid.
 Require Import Bool.

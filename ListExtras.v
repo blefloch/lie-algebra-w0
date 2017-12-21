@@ -185,6 +185,14 @@ Section list_helpers.
     - trivial.
     - simpl ; intros ; rewrite IHp ; firstorder.
   Qed.
+  Theorem thm_cons_repeat_app :
+    forall A (a : A) p,
+      a :: repeat a p = repeat a p ++ a::nil.
+  Proof.
+    intros.
+    rewrite <- thm_repeat_fact1, app_nil_r.
+    trivial.
+  Qed.
 End list_helpers.
 
 Section rewrite_length.

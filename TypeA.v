@@ -1057,25 +1057,6 @@ Section theorems_for_A_type.
     tac_du d2u2A.
   Qed.
 
-  (*TODO: move*)
-  Theorem thm_cons_repeat_app :
-    forall A (a : A) p,
-      a :: repeat a p = repeat a p ++ a::nil.
-  Proof.
-    intros.
-    rewrite <- thm_repeat_fact1, app_nil_r.
-    trivial.
-  Qed.
-  Theorem thm_Zvec_leb_cons :
-    forall a b lambda mu,
-      Zvec_short_allb Z.leb (a::lambda) (b::mu) = true
-      <-> (a <= b)%Z /\ Zvec_short_allb Z.leb lambda mu = true.
-  Proof.
-    intros.
-    simpl_extra.
-    split ; trivial.
-  Qed.
-
   Ltac tac_nth_split m lambda a l1 l2 H3 H5 H12 H13 H14 :=
     (
       simpl tl in *;
@@ -1086,8 +1067,6 @@ Section theorems_for_A_type.
       destruct (nth_split lambda a H12) as [l1 [l2 [H13 H14]]] ;
       rewrite H13 in *
     ).
-
-
   Ltac tac_du_intro p q :=
     intros ;
     repeat try (destruct p ; [omega|]) ;

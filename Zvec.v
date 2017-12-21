@@ -115,6 +115,15 @@ Section theorems.
     simpl.
     trivial.
   Qed.
+  Theorem thm_Zvec_leb_cons :
+    forall a b lambda mu,
+      Zvec_short_allb Z.leb (a::lambda) (b::mu) = true
+      <-> (a <= b)%Z /\ Zvec_short_allb Z.leb lambda mu = true.
+  Proof.
+    intros.
+    simpl_extra.
+    split ; trivial.
+  Qed.
   Theorem thm_Zvec_leb_refl :
     forall mu, Zvec_short_allb Z.leb mu mu = true.
   Proof.
