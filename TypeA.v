@@ -699,12 +699,12 @@ Section theorems_for_A_type.
            Is_exceptional_revwt_alg g lambda
            -> lambda = repeat 0%Z (length lambda)
               \/ (exists a b p q,
-                    a < 0
-                    /\ 0 < b
-                    /\ (0 < p)%nat
-                    /\ (0 < q)%nat
-                    /\ Z.of_nat q * b = - (Z.of_nat p * a)
-                    /\ lambda = repeat a p ++ repeat b q)%Z.
+                    (a < 0)%Z
+                    /\ (0 < b)%Z
+                    /\ 0 < p
+                    /\ 0 < q
+                    /\ (Z.of_nat q * b)%Z = (- (Z.of_nat p * a))%Z
+                    /\ lambda = repeat a p ++ repeat b q).
   Proof.
     intros g Hgtype lambda Hexc.
     destruct (thm_A_exceptional_twoval g Hgtype lambda Hexc)
@@ -1057,126 +1057,151 @@ Section theorems_for_A_type.
     tac_du d2u2A.
   Qed.
 
+  (*TODO: move*)
+  Theorem thm_cons_repeat_app :
+    forall A (a : A) p,
+      a :: repeat a p = repeat a p ++ a::nil.
+  Proof.
+    intros.
+    rewrite <- thm_repeat_fact1, app_nil_r.
+    trivial.
+  Qed.
+  Theorem thm_Zvec_leb_cons :
+    forall a b lambda mu,
+      Zvec_short_allb Z.leb (a::lambda) (b::mu) = true
+      <-> (a <= b)%Z /\ Zvec_short_allb Z.leb lambda mu = true.
+  Proof.
+    intros.
+    simpl_extra.
+    split ; trivial.
+  Qed.
+
+  Ltac tac_nth_split m lambda a l1 l2 H3 H5 H12 H13 H14 :=
+    (
+      simpl tl in *;
+      simpl in H5;
+      simpl_length in H3;
+      assert (m < length lambda) as H12;
+      [simpl_length ; omega |] ;
+      destruct (nth_split lambda a H12) as [l1 [l2 [H13 H14]]] ;
+      rewrite H13 in *
+    ).
+
+
+  Ltac tac_du_intro p q :=
+    intros ;
+    repeat try (destruct p ; [omega|]) ;
+    repeat try (destruct q ; [omega|]) ;
+    unfold Is_known_w0_branching_A_revwt,
+      radical_branching_A_two_revwt_b,
+      lie_is_radical_revwt_type,
+      d1u1A, d1u2A, d2u1A, d2u2A,
+      twovalA in * ;
+    autorewrite with rewritesome in * ;
+    firstorder.
+
   Theorem thm_d1u1A :
     forall a b p q lambda,
       (a < 0)%Z
       -> (0 < b)%Z
-      -> (1 < p)%nat
-      -> (0 < q)%nat
+      -> 1 < p
+      -> 0 < q
       -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
-      -> Is_known_w0_branching_A_revwt lambda (d1u1A a b p q)
-         \/ (nth 0 lambda a = a)
-         \/ (nth (1 + p) lambda a = a).
+      -> (nth 0 lambda a < a)%Z
+      -> (a < nth (1 + p) lambda a)%Z
+      -> Is_known_w0_branching_A_revwt lambda (d1u1A a b p q).
   Proof.
-    unfold Is_known_w0_branching_A_revwt, radical_branching_A_two_revwt_b in *.
-    intros.
-    autorewrite with rewritesome in *.
-    assert (lie_is_radical_revwt_type lie_A_type (d1u1A a b p q) = true) as H4.
-    { apply thm_d1u1A_radical ; firstorder ; omega. }
-    rewrite H4.
-    autorewrite with rewritesome.
-    destruct p as [|[|p]] ; try omega.
-    firstorder.
-    unfold twovalA in *.
-    assert (nth 0 lambda a <= a)%Z as H9.
-    {
-      clear -H6.
-      destruct lambda.
-      - simpl ; omega.
-      - unfold Zvec_short_allb in H6.
-        simpl in *.
-        autorewrite with rewritesome in *.
-        firstorder.
-    }
-    destruct (Z_le_lt_eq_dec _ _ H9) as [Hhda|Hhda] ; [|firstorder].
-    assert (a <= nth (3 + p) lambda a)%Z as H10.
-    {
-      clear - H3 H5.
-      destruct lambda as [|x0 [|x1 lambda]] ; simpl ; try omega.
-      simpl tl in *.
-      assert (S p < length (repeat a (S (S p)) ++ repeat b q)
-              /\ S p < length lambda) as [H1 H2].
-      {
-        autorewrite with rewritelength in *.
-        firstorder.
-      }
-      pose (H6 := thm_Zvec_leb_nth (S p) _ lambda a a H1 H2 H5).
-      clearbody H6.
-      rewrite app_nth1, thm_nth_repeat1 in H6.
-      exact H6.
-      autorewrite with rewritelength.
-      firstorder.
-    }
-    simpl add in *.
-    destruct (Z_le_lt_eq_dec _ _ H10) as [Hap|Hap] ; [|firstorder].
-    left.
-    unfold d1u1A.
-    repeat try split.
-    - clear -H3.
-      autorewrite with rewritelength in *.
+    tac_du_intro p q.
+    - autorewrite with rewritelength in *.
       omega.
-    - assumption.
+    - tac_nondecb.
+    - simpl_total.
+      simpl_total in H9.
+      omega.
     - destruct lambda ; [trivial|].
-      simpl_extra.
-      split.
-      + clear -Hhda.
-        simpl in Hhda.
-        omega.
-      + rewrite thm_repeat_fact1 in H6.
-        simpl_destruct H6 as [_ H6].
-        refine (thm_Zvec_leb_trans32 _ _ _ _ H6 _).
-        autorewrite with rewritelength ; omega.
-        rewrite thm_Zvec_leb_app.
-        split.
-        * apply thm_Zvec_leb_refl.
-        * simpl_extra.
-          split.
-          omega.
-          apply thm_Zvec_leb_refl.
-        * trivial.
-    - destruct lambda as [|z [|z0 lambda]]; trivial.
-      simpl in H10, Hap.
-      simpl tl in *.
-      assert (S p < length lambda) as Hl.
-      {
-        clear -H3.
-        simpl_length in H3.
-        omega.
-      }
-      destruct (nth_split lambda a Hl) as [l1 [l2 [H11 H12]]].
-      rewrite H11.
-      rewrite H11 in H5, H6, H3, H9, H8, Hl, H10, Hhda.
-      rewrite app_comm_cons.
-      rewrite thm_repeat_fact1 in H5, H7.
-      rewrite thm_Zvec_leb_app in *.
+      simpl in *.
+      autorewrite with rewritesome in *.
       firstorder.
-      all : try solve [clear -H3 H12 ; autorewrite with rewritelength in *; omega].
-      + refine (thm_Zvec_leb_trans32 _ _ _ _ _ H5).
-        clear -H3 H12 ; autorewrite with rewritelength in *; omega.
+      refine (thm_Zvec_leb_trans32 _ _ _ _ H12 _).
+      + simpl_length ; omega.
+      + rewrite app_comm_cons, thm_cons_repeat_app, <- app_assoc.
         simpl.
-        rewrite thm_Zvec_leb_refl.
-        simpl_extra.
+        rewrite thm_Zvec_leb_app.
+        simpl.
+        rewrite thm_Zvec_leb_refl, thm_Zvec_leb_refl.
+        autorewrite with rewritesome.
         omega.
+        trivial.
+    - destruct lambda as [|z [|z0 lambda]] ;
+      try (clear -H3 ; simpl in * ; progress firstorder).
+      tac_nth_split (S p) lambda a l1 l2 H3 H5 H12 H13 H14.
+      rewrite app_comm_cons, thm_Zvec_leb_app.
+      rewrite thm_repeat_fact1, thm_Zvec_leb_app in H6.
+      firstorder.
+      + clear -H6.
+        destruct l1 ; simpl_extra ; simpl_extra in H6 ; firstorder.
       + simpl_extra.
-        split.
-        * omega.
-        * clear -H13.
-          simpl_extra in H13.
-          firstorder.
+        simpl_extra in H15.
+        firstorder.
+        rewrite H13.
+        omega.
+      + simpl_length.
+        exact (eq_sym H14).
+      + simpl_length.
+        exact (eq_sym H14).
   Qed.
+
   Theorem thm_d1u2A :
     forall a b p q lambda,
       (a < 0)%Z
       -> (0 < b)%Z
-      -> (0 < p)%nat
-      -> (0 < q)%nat
+      -> 0 < p
+      -> 0 < q
       -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
-      -> Is_known_w0_branching_A_revwt lambda (d1u2A a b p q)
-         \/ (nth 0 lambda a = a)
-         \/ (nth (1 + p + q) lambda b = b).
+      -> (nth 0 lambda a < a)%Z
+      -> (b < nth (1 + p + q) lambda b)%Z
+      -> Is_known_w0_branching_A_revwt lambda (d1u2A a b p q).
   Proof.
-    admit.
-  Admitted.
+    tac_du_intro p q.
+    - autorewrite with rewritelength in *.
+      simpl.
+      omega.
+    - tac_nondecb.
+      destruct q.
+      all : simpl.
+      all : rewrite thm_last_repeat.
+      all : destruct p ; simpl ; omega.
+    - simpl_total.
+      simpl_total in H9.
+      omega.
+    - destruct lambda ; [trivial|].
+      simpl in *.
+      autorewrite with rewritesome in *.
+      firstorder.
+      refine (thm_Zvec_leb_trans32 _ _ _ _ H12 _).
+      + simpl_length ; omega.
+      + rewrite thm_cons_repeat_app, thm_Zvec_leb_app, thm_Zvec_leb_app.
+        rewrite thm_Zvec_leb_refl, thm_Zvec_leb_refl.
+        all : trivial.
+        simpl_extra.
+        omega.
+    - destruct lambda as [|z [|z0 lambda]] ;
+      try (clear -H3 ; simpl in * ; progress firstorder).
+      tac_nth_split (p + S q) lambda b l1 l2 H3 H5 H12 H13 H14.
+      rewrite app_comm_cons, app_assoc, thm_Zvec_leb_app.
+      simpl repeat in H6.
+      rewrite (thm_cons_repeat_app _ b q), app_assoc, thm_Zvec_leb_app in H6.
+      firstorder.
+      + clear -H6.
+        destruct l1 ; simpl_extra ; simpl_extra in H6 ; firstorder.
+      + simpl_extra.
+        simpl_extra in H15.
+        rewrite H13.
+        omega.
+      + simpl_length ; clear -H14 ; omega.
+      + simpl_length ; clear -H14 ; omega.
+  Qed.
+
   Theorem thm_d2u1A :
     forall a b p q lambda,
       (a < 0)%Z
@@ -1184,12 +1209,60 @@ Section theorems_for_A_type.
       -> (0 < p)%nat
       -> (0 < q)%nat
       -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
-      -> Is_known_w0_branching_A_revwt lambda (d2u1A a b p q)
-         \/ (nth p lambda b = b)
-         \/ (nth (1 + p) lambda a = a).
+      -> (nth p lambda b < b)%Z
+      -> (a < nth (1 + p) lambda a)%Z
+      -> Is_known_w0_branching_A_revwt lambda (d2u1A a b p q).
   Proof.
-    admit.
-  Admitted.
+    tac_du_intro p q.
+    - autorewrite with rewritelength in *.
+      simpl.
+      omega.
+    - tac_nondecb.
+    - simpl_total.
+      simpl_total in H9.
+      omega.
+    - tac_nth_split p lambda a l1 l2 H3 H5 H12 H13 H14.
+      rewrite thm_Zvec_leb_app.
+      rewrite thm_repeat_fact1, thm_Zvec_leb_app in H7.
+      firstorder.
+      all : try (rewrite H14 ; simpl_length ; trivial).
+      simpl_extra.
+      simpl_extra in H15.
+      firstorder.
+      destruct l2 ; [trivial|].
+      simpl_extra.
+      assert (S p - p = 1) as H17.
+      { clear. omega. }
+      rewrite app_nth2, H14, H17 in H4.
+      all : try rewrite H14 in *.
+      simpl in H4.
+      simpl_extra in H16.
+      all : firstorder.
+    - rewrite thm_repeat_fact1 in H6.
+      tac_nth_split p (tl (tl lambda)) a l1 l2 H3 H5 H12 H13 H14.
+      rewrite thm_Zvec_leb_app ; [|rewrite H14 ; tac_length].
+      rewrite thm_Zvec_leb_app in H6 ; [|rewrite H14 ; tac_length].
+      firstorder.
+      set (z := nth p (tl (tl lambda)) a) in *.
+      assert (z = nth (S (S p)) lambda a) as H16.
+      {
+        unfold z.
+        destruct lambda as [|x [|x0 lambda]].
+        all : simpl in * ; firstorder.
+      }
+      rewrite H16, thm_Zvec_leb_cons in *.
+      firstorder.
+      refine (thm_Zvec_leb_trans32 _ _ _ _ _ H17).
+      + autorewrite with rewritelength in *.
+        rewrite H14 in *.
+        pose (H18 := eq_refl (length (tl (tl lambda)))).
+        rewrite H13 in H18 at 1.
+        simpl_length in H18.
+        omega.
+      + simpl_extra.
+        split ; [omega|apply thm_Zvec_leb_refl].
+  Qed.
+
   Theorem thm_d2u2A :
     forall a b p q lambda,
       (a < 0)%Z
@@ -1197,12 +1270,57 @@ Section theorems_for_A_type.
       -> (0 < p)%nat
       -> (1 < q)%nat
       -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
-      -> Is_known_w0_branching_A_revwt lambda (d2u2A a b p q)
-         \/ (nth p lambda b = b)
-         \/ (nth (1 + p + q) lambda b = b).
+      -> (nth p lambda b < b)%Z
+      -> (b < nth (1 + p + q) lambda b)%Z
+      -> Is_known_w0_branching_A_revwt lambda (d2u2A a b p q).
   Proof.
-    admit.
-  Admitted.
+    tac_du_intro p q.
+    - autorewrite with rewritelength in *.
+      simpl.
+      omega.
+    - tac_nondecb.
+    - simpl_total.
+      simpl_total in H9.
+      omega.
+    - tac_nth_split (S p) lambda b l1 l2 H3 H5 H12 H13 H14.
+      rewrite thm_Zvec_leb_app ; [|rewrite H14 ; tac_length].
+      rewrite thm_Zvec_leb_app in H7 ; [|rewrite H14 ; tac_length].
+      firstorder.
+      simpl_extra.
+      simpl_extra in H15.
+      firstorder.
+      + rewrite H13 ; omega.
+      + rewrite thm_cons_repeat_app in H16.
+        tac_nth_split q l2 b l3 l4 H3 H5 H17 H18 H19.
+        rewrite thm_Zvec_leb_app ; [|rewrite H19 ; tac_length].
+        rewrite thm_Zvec_leb_app in H16 ; [|rewrite H19 ; tac_length].
+        firstorder.
+        simpl_extra.
+        simpl_extra in H20.
+        firstorder.
+    - destruct lambda as [|x [|x0 lambda]].
+      all : simpl_length in H3.
+      all : try (clear -H3 ; omega).
+      simpl tl in *.
+      tac_nth_split (2 + p + q) lambda b l1 l2 H3 H5 H12 H13 H14.
+      rewrite app_comm_cons, app_assoc, thm_Zvec_leb_app ; [|rewrite H14 ; tac_length].
+      assert (repeat b (S (S q)) = repeat b (S q) ++ b::nil) as Hbq.
+      { simpl. rewrite thm_cons_repeat_app. trivial. }
+      rewrite Hbq, app_assoc, thm_Zvec_leb_app in H6 ; [|rewrite H14 ; tac_length].
+      firstorder.
+      + refine (thm_Zvec_leb_trans32 _ _ _ _ _ H6).
+        * simpl_length. omega.
+        * rewrite thm_Zvec_leb_app, thm_Zvec_leb_refl.
+          simpl_extra.
+          rewrite thm_Zvec_leb_refl.
+          clear.
+          all : firstorder.
+      + simpl_extra.
+        rewrite <- H13 in H5.
+        clear -H5.
+        rewrite plus_n_Sm, plus_n_Sm.
+        omega.
+  Qed.
 
   Theorem thm_d1u1A_not_exceptional :
     forall a b p q g,

@@ -268,3 +268,13 @@ Ltac tac_length := simpl_length ; try omega.
 Ltac destruct_bool b H :=
   destruct (Sumbool.sumbool_of_bool b) as [H|H] ;
   rewrite H.
+
+Hint Rewrite
+     thm_hd_app
+     thm_hd_repeat
+: rewritehd.
+Tactic Notation "simpl_hd" :=
+  repeat (simpl || autorewrite with rewritehd).
+Tactic Notation "simpl_hd" "in" hyp(H) :=
+  repeat (simpl in H || autorewrite with rewritehd in H).
+

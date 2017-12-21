@@ -108,6 +108,13 @@ Section Zhelpers.
 End Zhelpers.
 
 Section theorems.
+  Theorem thm_Zvec_nondecb_nil :
+    Zvec_nondecb nil = true .
+  Proof.
+    unfold Zvec_nondecb.
+    simpl.
+    trivial.
+  Qed.
   Theorem thm_Zvec_leb_refl :
     forall mu, Zvec_short_allb Z.leb mu mu = true.
   Proof.
@@ -760,3 +767,30 @@ Section more_list_thm.
     omega.
   Qed.
 End more_list_thm.
+
+Tactic Notation "tac_nondecb" :=
+  repeat
+    (simpl || match goal with
+                | [ |- Zvec_nondecb nil = true ]
+                  => exact thm_Zvec_nondecb_nil
+                | [ |- Zvec_nondecb (_::_::_::_) = true ]
+                  => refine (thm_Zvec_nondecb_join3 _ _ _ _ _ _ _)
+                | [ |- Zvec_nondecb (_::_::_) = true ]
+                  => refine (thm_Zvec_nondecb_join2 _ _ _ _ _)
+                | [ |- Zvec_nondecb (_::_) = true ]
+                  => refine (thm_Zvec_nondecb_join _ _ _ _)
+                | [ |- Zvec_nondecb (_++_) = true ]
+                  => rewrite thm_Zvec_nondecb_app_iff
+                | [ |- Zvec_nondecb (repeat _ _) = true ]
+                  => refine (thm_Zvec_nondecb_repeat _ _)
+                | [ |- _ /\ _ ]
+                  => split
+                | [ |- context[hd] ]
+                  => simpl_hd
+                | [ |- context[last (repeat _ _)]]
+                  => rewrite thm_last_repeat
+                | [ |- context[if ?p=?0 then _ else _]]
+                  => (destruct p ; simpl ; try omega) (*Possibly dangerous loop?*)
+                | [ |- _ ]
+                  => try omega
+              end).
