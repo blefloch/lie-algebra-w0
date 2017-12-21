@@ -27,9 +27,6 @@ Theorem main :
     -> (Is_exceptional_revwt_alg g lambda) \/ (Is_mixed_revwt_alg g lambda).
 Proof.
   intros g lambda Hrad.
-  pose (Hlength := thm_radical_length _ _ Hrad).
-  pose (gcopy := g).
-  pose (lambdacopy := lambda).
   destruct g as [[n Hn]|[n Hn]|[n Hn]|[n Hn]| | | | |].
   - refine (thm_main_A _ _ _ Hrad) ; firstorder.
   - refine (thm_main_B _ _ _ Hrad) ; firstorder.
