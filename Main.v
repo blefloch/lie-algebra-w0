@@ -26,23 +26,7 @@ Proof.
   pose (gcopy := g).
   pose (lambdacopy := lambda).
   destruct g as [[n Hn]|[n Hn]|[n Hn]|[n Hn]| | | | |].
-  - (*A-type Lie algebras*)
-    simpl in Hlength.
-    clearbody Hlength.
-    destruct n as [|[|[|[|n]]]].
-    + (*A_0*)
-      omega.
-    + (*A_1*)
-      destruct lambda as [|a [|b [|]]] ; simpl in Hlength ; try omega.
-      exact (thm_main_A1 _ _ _ (eq_refl _) Hrad).
-    + (*A_2*)
-      destruct lambda as [|a [|b [|c [|]]]] ; simpl in Hlength ; try omega.
-      exact (thm_main_A2 _ _ _ (eq_refl _) Hrad).
-    + (*A_3*)
-      destruct lambda as [|a [|b [|c [|d [|]]]]] ; simpl in Hlength ; try omega.
-      exact (thm_main_A3 _ _ _ (eq_refl _) Hrad).
-    + (*A_n, n>=4*)
-      refine (thm_main_A _ _ _ Hrad) ; firstorder.
+  - refine (thm_main_A _ _ _ Hrad) ; firstorder.
   - refine (thm_main_B _ _ _ Hrad) ; firstorder.
   - refine (thm_main_C _ _ _ Hrad) ; firstorder.
   - refine (thm_main_D _ _ _ Hrad) ; firstorder.
