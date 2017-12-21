@@ -1,10 +1,6 @@
-Require Import Setoid.
-Require Import Bool.
 Require Import List.
 Require Import ZArith.
 Require Import Nat.
-(*Our files*)
-Require Import Rewriting.
 Open Scope nat_scope.
 
 Section list_helpers.
@@ -51,7 +47,9 @@ Section list_helpers.
         intros.
         rewrite thm_tl_app, IHl.
         trivial.
-        tac_length.
+        intros H.
+        destruct (app_eq_nil _ _ H) as [_ H0].
+        discriminate H0.
   Qed.
   Theorem thm_removelast_map :
     forall {A B} (f : A -> B) (l : list A),
@@ -63,8 +61,10 @@ Section list_helpers.
     - simpl.
       destruct l.
       + trivial.
-      + simpl_extra.
-        firstorder.
+      + simpl.
+        simpl in IHl.
+        rewrite IHl.
+        trivial.
   Qed.
   Theorem thm_hd_repeat :
     forall A (a b : A) n,
@@ -121,9 +121,9 @@ Section list_helpers.
   Proof.
     intros.
     rewrite app_nth2.
-    all: autorewrite with rewritelength in *.
+    all : rewrite repeat_length.
     rewrite thm_nth_repeat1 ; trivial.
-    omega.
+    assumption.
   Qed.
   Theorem thm_nth_tl_tl :
     forall A (a : A) k lambda,
@@ -131,7 +131,7 @@ Section list_helpers.
   Proof.
     intros.
     destruct k as [|[|k]] ; simpl ; try omega.
-    rewrite Nat.sub_0_r.
+    rewrite PeanoNat.Nat.sub_0_r.
     destruct lambda as [|x [|y lambda]].
     all : simpl ; firstorder.
     all : destruct k ; trivial.
@@ -146,4 +146,3 @@ Section list_helpers.
     - simpl ; intros ; rewrite IHp ; firstorder.
   Qed.
 End list_helpers.
-
