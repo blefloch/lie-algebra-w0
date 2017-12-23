@@ -163,27 +163,27 @@ Section A123.
   Qed.
 End A123.
 
-Section exhibit_branching.
-  Local Fixpoint tmp_A_pred (lambda mu : list Z) :=
+Section branchof.
+  Fixpoint getpred (lambda mu : list Z) :=
     match lambda with
       | nil => nil
       | a :: lambda' =>
         match mu with
           | nil => nil
           | b :: mu' =>
-            if (a <? b)%Z then (b - 1)%Z :: mu' else b :: tmp_A_pred lambda' mu'
+            if (a <? b)%Z then (b - 1)%Z :: mu' else b :: getpred lambda' mu'
         end
     end.
-  Local Fixpoint tmp_A_get_repeat (lambda mu : list Z) (n : nat) :=
+  Fixpoint getnthpred (lambda mu : list Z) (n : nat) :=
     match n with
       | 0 => mu
-      | S n' => tmp_A_pred lambda (tmp_A_get_repeat lambda mu n')
+      | S n' => getpred lambda (getnthpred lambda mu n')
     end.
-  Local Definition tmp_A_get (lambda : list Z) :=
+  Definition branchof (lambda : list Z) :=
     let mu := tl (tl lambda) in
-    tmp_A_get_repeat lambda mu (Z.abs_nat (Zvec_total mu)).
+    getnthpred lambda mu (Z.abs_nat (Zvec_total mu)).
   Theorem thm_A_pred_length0 :
-    forall lambda0 mu0, length (tmp_A_pred lambda0 mu0) <= length mu0.
+    forall lambda0 mu0, length (getpred lambda0 mu0) <= length mu0.
   Proof.
     intros lambda0 mu0.
     generalize lambda0 as lambda1.
@@ -193,7 +193,7 @@ Section exhibit_branching.
   Theorem thm_A_pred_length1 :
     forall lambda0 mu0,
       length mu0 <= length lambda0
-      -> length (tmp_A_pred lambda0 mu0) = length mu0.
+      -> length (getpred lambda0 mu0) = length mu0.
   Proof.
     intros lambda0 mu0.
     generalize lambda0 as lambda1.
@@ -202,7 +202,7 @@ Section exhibit_branching.
   Qed.
   Theorem thm_A_pred_leb :
     forall lambda mu,
-      Zvec_short_allb Z.leb (tmp_A_pred lambda mu) mu = true.
+      Zvec_short_allb Z.leb (getpred lambda mu) mu = true.
   Proof.
     intros lambda mu.
     generalize lambda as lambda1.
@@ -213,7 +213,7 @@ Section exhibit_branching.
   Theorem thm_A_pred_leb2 :
     forall lambda mu,
       Zvec_short_allb Z.leb lambda mu = true
-      -> Zvec_short_allb Z.leb lambda (tmp_A_pred lambda mu) = true.
+      -> Zvec_short_allb Z.leb lambda (getpred lambda mu) = true.
   Proof.
     induction lambda.
     - simpl ; firstorder.
@@ -239,7 +239,7 @@ Section exhibit_branching.
       Zvec_short_allb Z.leb lambda0 mu0 = true
       -> length mu0 <= length lambda0
       -> Zvec_short_allb Z.eqb lambda0 mu0 = false
-      -> Zvec_total (tmp_A_pred lambda0 mu0) = (Zvec_total mu0 - 1)%Z.
+      -> Zvec_total (getpred lambda0 mu0) = (Zvec_total mu0 - 1)%Z.
   Proof.
     intros lambda0 mu0.
     generalize lambda0 as lambda1.
@@ -269,13 +269,13 @@ Section exhibit_branching.
        lambda <> nil
        -> mu <> nil
        -> hd 0 lambda <= hd 0 mu
-       -> hd 0 lambda <= hd 0 (tmp_A_get_repeat lambda mu n))%Z.
+       -> hd 0 lambda <= hd 0 (getnthpred lambda mu n))%Z.
   Proof.
     destruct lambda, mu ; simpl ; intros ; firstorder.
     induction n.
     - simpl ; trivial.
     - simpl.
-      destruct (tmp_A_get_repeat (z :: lambda) (z0 :: mu) n).
+      destruct (getnthpred (z :: lambda) (z0 :: mu) n).
       + assumption.
       + simpl in IHn.
         destruct (Z_le_lt_eq_dec _ _ IHn) as [H2|H2].
@@ -290,7 +290,7 @@ Section exhibit_branching.
           omega.
   Qed.
   Theorem thm_A_get_repeat_nil :
-    forall lambda n, tmp_A_get_repeat lambda nil n = nil.
+    forall lambda n, getnthpred lambda nil n = nil.
   Proof.
     induction n.
     - simpl ; trivial.
@@ -300,7 +300,7 @@ Section exhibit_branching.
   Theorem thm_A_get_repeat_leb :
     forall n lambda mu,
       Zvec_short_allb Z.leb lambda mu = true
-      -> Zvec_short_allb Z.leb lambda (tmp_A_get_repeat lambda mu n) = true.
+      -> Zvec_short_allb Z.leb lambda (getnthpred lambda mu n) = true.
   Proof.
     induction n.
     - simpl ; trivial.
@@ -309,12 +309,12 @@ Section exhibit_branching.
       refine (thm_A_pred_leb2 _ _ _).
       exact (IHn _ _ H).
   Qed.
-  Theorem thm_A_get_leb :
+  Theorem thm_branchof_leb :
     forall lambda,
       Zvec_nondecb lambda = true
-      -> Zvec_short_allb Z.leb lambda (tmp_A_get lambda) = true.
+      -> Zvec_short_allb Z.leb lambda (branchof lambda) = true.
   Proof.
-    unfold Zvec_nondecb, tmp_A_get.
+    unfold Zvec_nondecb, branchof.
     intros lambda H.
     destruct lambda as [|a lambda].
     - simpl ; trivial.
@@ -328,38 +328,38 @@ Section exhibit_branching.
   Theorem thm_A_get_repeat_length0 :
     forall lambda mu n,
       length mu <= length lambda
-      -> length (tmp_A_get_repeat lambda mu n) <= length lambda.
+      -> length (getnthpred lambda mu n) <= length lambda.
   Proof.
     intros lambda mu n H.
     induction n.
     - simpl ; trivial.
     - simpl.
-      pose (H0 := thm_A_pred_length0 lambda (tmp_A_get_repeat lambda mu n)).
+      pose (H0 := thm_A_pred_length0 lambda (getnthpred lambda mu n)).
       exact (le_trans _ _ _ H0 IHn).
   Qed.
   Theorem thm_A_get_repeat_length1 :
     forall lambda mu n,
       length mu <= length lambda
-      -> length (tmp_A_get_repeat lambda mu n) = length mu.
+      -> length (getnthpred lambda mu n) = length mu.
   Proof.
     intros lambda mu n H.
     induction n.
     - simpl ; trivial.
     - simpl.
-      pose (H0 := thm_A_pred_length1 lambda (tmp_A_get_repeat lambda mu n)).
+      pose (H0 := thm_A_pred_length1 lambda (getnthpred lambda mu n)).
       rewrite IHn in H0.
       firstorder.
   Qed.
-  Theorem thm_A_get_total :
+  Theorem thm_branchof_total :
     forall lambda,
       (lie_is_radical_revwt_type lie_A_type lambda) = true
-      -> (Zvec_total (tmp_A_get lambda) = 0)%Z.
+      -> (Zvec_total (branchof lambda) = 0)%Z.
   Proof.
     intros lambda Hrad.
     destruct lambda as [|a [|b lambda2]] ; simpl ; trivial.    
     unfold lie_is_radical_revwt_type in Hrad.
     simpl_destruct Hrad as [Hinc Htot].
-    unfold tmp_A_get, tl.
+    unfold branchof, tl.
     assert (Zvec_total lambda2 >= 0)%Z.
     {
       pose (H := thm_Zvec_nondecb_total_app (a::b::nil) lambda2).
@@ -376,7 +376,7 @@ Section exhibit_branching.
     }
     assert (forall m,
               Z.of_nat m <= Zvec_total lambda2
-              -> Zvec_total (tmp_A_get_repeat (a :: b :: lambda2) lambda2 m)
+              -> Zvec_total (getnthpred (a :: b :: lambda2) lambda2 m)
                  = Zvec_total lambda2 - Z.of_nat m)%Z as H1.
     {
       set (lambda := (a::b::lambda2)).
@@ -387,8 +387,8 @@ Section exhibit_branching.
         assert (Z.of_nat m <= Zvec_total lambda2)%Z as Htmp.
         { omega. }
         pose (H2 := IHm Htmp). clearbody H2. clear Htmp IHm.
-        cut (Zvec_total (tmp_A_get_repeat lambda lambda2 (S m))
-             = Zvec_total (tmp_A_get_repeat lambda lambda2 m) - 1)%Z.
+        cut (Zvec_total (getnthpred lambda lambda2 (S m))
+             = Zvec_total (getnthpred lambda lambda2 m) - 1)%Z.
         {
           intros H4.
           rewrite H4.
@@ -396,25 +396,25 @@ Section exhibit_branching.
           omega.
         }
         assert (Zvec_short_allb
-                  Z.leb lambda (tmp_A_get_repeat lambda lambda2 m) = true) as H3.
+                  Z.leb lambda (getnthpred lambda lambda2 m) = true) as H3.
         {
           exact (thm_A_get_repeat_leb m lambda lambda2
                                (thm_Zvec_nondecb_fact3 a b lambda2 Hinc)).
         }
-        assert (length (tmp_A_get_repeat lambda lambda2 m) <= length lambda) as H4.
+        assert (length (getnthpred lambda lambda2 m) <= length lambda) as H4.
         {
           assert (length lambda2 <= length lambda) as H5.
           { simpl. firstorder. }
           exact (thm_A_get_repeat_length0 lambda lambda2 m H5).
         }
-        refine (thm_A_pred_tot lambda (tmp_A_get_repeat lambda lambda2 m) H3 H4 _).
+        refine (thm_A_pred_tot lambda (getnthpred lambda lambda2 m) H3 H4 _).
         rewrite <- not_true_iff_false.
         intros H5.
-        pose (H6 := thm_Zvec_leb_eqb_tot lambda (tmp_A_get_repeat lambda lambda2 m) H4 H3).
+        pose (H6 := thm_Zvec_leb_eqb_tot lambda (getnthpred lambda lambda2 m) H4 H3).
         rewrite H6 in H5.
         rewrite H2 in H5.
         pose (H7 := thm_Zvec_nondecb_partialsum
-                      lambda (length (tmp_A_get_repeat lambda lambda2 m)) Hinc Htot).
+                      lambda (length (getnthpred lambda lambda2 m)) Hinc Htot).
         rewrite <- H5 in H7.
         omega.
     }
@@ -422,12 +422,12 @@ Section exhibit_branching.
     rewrite H0 in H2.
     firstorder.
   Qed.
-  Theorem thm_A_get_length :
+  Theorem thm_branchof_length :
     forall lambda,
-      length (tmp_A_get lambda) = length lambda - 2.
+      length (branchof lambda) = length lambda - 2.
   Proof.
     destruct lambda as [|a [|b lambda2]] ; simpl ; firstorder.
-    unfold tmp_A_get, tl.
+    unfold branchof, tl.
     rewrite Nat.sub_0_r.
     refine (thm_A_get_repeat_length1 (a::b::lambda2) lambda2 _ _).
     simpl.
@@ -435,8 +435,8 @@ Section exhibit_branching.
   Qed.
   Theorem thm_A_get_repeat_S :
     forall lambda mu m,
-      tmp_A_get_repeat lambda mu (S m)
-      = tmp_A_pred lambda (tmp_A_get_repeat lambda mu m).
+      getnthpred lambda mu (S m)
+      = getpred lambda (getnthpred lambda mu m).
   Proof.
     trivial.
   Qed.
@@ -444,7 +444,7 @@ Section exhibit_branching.
     forall lambda mu,
       Zvec_nondecb lambda = true
       -> Zvec_nondecb mu = true
-      -> Zvec_nondecb (tmp_A_pred lambda mu) = true.
+      -> Zvec_nondecb (getpred lambda mu) = true.
   Proof.
     intros lambda.
     induction lambda as [|x lambda].
@@ -489,15 +489,15 @@ Section exhibit_branching.
               }
         }
   Qed.
-  Theorem thm_A_get_nondecb :
+  Theorem thm_branchof_nondecb :
     forall lambda,
       Zvec_nondecb lambda = true
-      -> Zvec_nondecb (tmp_A_get lambda) = true.
+      -> Zvec_nondecb (branchof lambda) = true.
   Proof.
     destruct lambda as [|a [|b lambda2]].
     - firstorder.
     - firstorder.
-    - unfold tmp_A_get, tl.
+    - unfold branchof, tl.
       set (n := Z.abs_nat (Zvec_total lambda2)).
       intros H.
       generalize n as p.
@@ -511,27 +511,27 @@ Section exhibit_branching.
     forall lambda,
       lie_is_radical_revwt_type lie_A_type lambda = true
       -> length lambda >= 2
-      -> Is_known_w0_branching_A_revwt lambda (tmp_A_get lambda).
+      -> Is_known_w0_branching_A_revwt lambda (branchof lambda).
   Proof.
     intros lambda Hrad Hlength.
     unfold Is_known_w0_branching_A_revwt, radical_branching_A_two_revwt_b, tl.
-    rewrite thm_A_get_length.
+    rewrite thm_branchof_length.
     destruct lambda as [|a [|b lambda]] ; simpl in Hlength ; try omega.
     autorewrite with rewritesome.
     firstorder.
     - simpl ; rewrite Nat.sub_0_r ; trivial.
     - simpl_extra.
       firstorder.
-      + refine (thm_A_get_nondecb _ _).
+      + refine (thm_branchof_nondecb _ _).
         unfold lie_is_radical_revwt_type in Hrad.
         autorewrite with rewritesome in Hrad.
         firstorder.
-      + refine (thm_A_get_total _ Hrad).
-    - refine (thm_A_get_leb (a::b::lambda) _).
+      + refine (thm_branchof_total _ Hrad).
+    - refine (thm_branchof_leb (a::b::lambda) _).
       unfold lie_is_radical_revwt_type in Hrad.
       autorewrite with rewritesome in Hrad.
       firstorder.
-    - unfold tmp_A_get, tl.
+    - unfold branchof, tl.
       set (n := Z.abs_nat (Zvec_total lambda)).
       generalize n as n0.
       induction n0.
@@ -541,7 +541,7 @@ Section exhibit_branching.
         * exact (thm_A_pred_length0 _ _).
         * exact (thm_A_pred_leb _ _).
   Qed.
-End exhibit_branching.
+End branchof.
 
 Section mrev.
   Theorem thm_A_radical_mrev :
@@ -1950,7 +1950,7 @@ Section main.
         { simpl ; trivial. }
         pose (Hknownbranching := thm_An_branching_fact1 lambda Hrad Hl2).
         pose (H := Hknownbranching).
-        set (mu := tmp_A_get lambda) in *.
+        set (mu := branchof lambda) in *.
         clearbody mu H Hknownbranching.
         unfold Is_known_w0_branching_A_revwt, radical_branching_A_two_revwt_b in H.
         simpl_destruct H as [[[[Hlenlm Hradl] Hradm] Hlm] Hml].
