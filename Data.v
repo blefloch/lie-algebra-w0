@@ -151,11 +151,12 @@ Section main.
   | mixed_by_ideal :
       forall g lambda mu,
         Is_mixed_revwt_alg g mu
-        /\ lie_is_dominant_revwt_alg g (Zvec_short_sub lambda mu) = true
+        -> length lambda = length mu
+        -> lie_is_radical_revwt_alg g (Zvec_short_sub lambda mu) = true
         -> Is_mixed_revwt_alg g lambda
   | mixed_by_induction :
       forall g lambda h mu,
         Is_mixed_revwt_alg h mu
-        /\ Is_known_w0_branching_revwt_alg g lambda h mu
+        -> Is_known_w0_branching_revwt_alg g lambda h mu
         -> Is_mixed_revwt_alg g lambda.
 End main.

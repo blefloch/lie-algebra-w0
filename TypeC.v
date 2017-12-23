@@ -38,27 +38,87 @@ Proof.
   - exists (Z.neg p) ; trivial.
 Qed.
 
+Theorem thm_Zeven_pos_explicit_1 :
+  forall a : positive,
+    Z.even (Z.pos (a~1)) = false.
+Proof.
+  trivial.
+Qed.
+Theorem thm_Zeven_pos_explicit_0 :
+  forall a : positive,
+    Z.even (Z.pos (a~0)) = true.
+Proof.
+  trivial.
+Qed.
+Theorem thm_Zeven_neg_explicit_1 :
+  forall a : positive,
+    Z.even (Z.neg (a~1)) = false.
+Proof.
+  trivial.
+Qed.
+Theorem thm_Zeven_neg_explicit_0 :
+  forall a : positive,
+    Z.even (Z.neg (a~0)) = true.
+Proof.
+  trivial.
+Qed.
+
+
+Hint Rewrite
+Z.even_add
+Z.even_sub
+Z.even_opp
+Z.even_0
+Z.even_1
+thm_Zeven_pos_explicit_1
+thm_Zeven_pos_explicit_0
+thm_Zeven_neg_explicit_1
+thm_Zeven_neg_explicit_0
+: rewriteeven.
+
 Section C3.
+  (*
   Ltac show_mixed_by_ideal g lambda mu :=
     match goal with
       | [ |- _]
         =>
         (right;
-         refine (mixed_by_ideal g lambda mu _) ;
-         split ;
+         refine (mixed_by_ideal g lambda mu _ _ _) ;
          [
            refine (mixed_by_hand g mu _) ;
            unfold g ;
            simpl ; trivial
          |
+         tac_length
+         |
          unfold g ;
-           unfold Zvec_short_sub, lie_is_dominant_revwt_alg ;
+           unfold Zvec_short_sub, lie_is_radical_revwt_alg ;
            simpl ;
            unfold Zvec_nondecb ;
            simpl_extra ;
            omega
         ])
     end.
+   *)
+  Ltac show_mixed_by_ideal g mu :=
+    repeat match goal with
+             | [ |- _ /\ _ ] => split
+             | [ |- _ \/ Is_mixed_revwt_alg _ _ ]
+               => right ; refine (mixed_by_ideal g _ mu _ _ _)
+             | [ |- Is_mixed_revwt_alg g mu ]
+               => exact (mixed_by_hand g mu eq_refl)
+             | [ |- length _ = length mu ]
+               => exact eq_refl
+             | [ |- lie_is_radical_revwt_alg g (Zvec_short_sub _ mu) = true ]
+               => unfold Zvec_short_sub, lie_is_radical_revwt_alg ;
+                 simpl ;
+                 unfold Zvec_nondecb ;
+                 simpl_extra
+             | [ |- context[Z.even] ]
+               => (progress autorewrite with rewriteeven in *)
+                    || (repeat destruct (Z.even _))
+             | [ |- _ ] => simpl ; firstorder ; try omega
+           end.
   Theorem thm_main_C3 :
     forall (Hn : 3 > 2) (lambda : list Z),
       let g := lie_C (exist (fun n : nat => n > 2) 3 Hn) in
@@ -66,10 +126,11 @@ Section C3.
       -> Is_exceptional_revwt_alg g lambda
          \/ Is_mixed_revwt_alg g lambda.
   Proof.
-    intros Hn lambda g Hrad.
+    intros Hn lambdacopy g Hrad.
     unfold lie_is_radical_revwt_alg, lie_algebra_type, g, lie_is_radical_revwt_type in Hrad.
     simpl_destruct Hrad as [Hlength [[Hinc H0a] Htot]].
-    destruct lambda as [|a [|b [|c [|]]]] ; simpl in Hlength ; try omega.
+    pose (lambda := lambdacopy).
+    destruct lambdacopy as [|a [|b [|c [|]]]] ; simpl in Hlength ; try omega.
     simpl in *.
     rewrite Z.add_0_r in Htot.
     unfold Zvec_nondecb in Hinc.
@@ -82,15 +143,16 @@ Section C3.
     all : try rewrite <- Hbeqc in *.
     all : try (rewrite Z.even_add, Z.even_add,
                eqb_reflx, eqb_true_iff in Htot ;
-               pose (H2lea := thm_Z_even_pos a Htot H0lta)).
-    - show_mixed_by_ideal g (a::b::c::nil) (1::1::2::nil)%Z.
-    - show_mixed_by_ideal g (a::b::b::nil) (2::3::3::nil)%Z.
-    - show_mixed_by_ideal g (a::a::c::nil) (1::1::2::nil)%Z.
+               pose (H2lea := thm_Z_even_pos a Htot H0lta) ;
+               clearbody H2lea).
+    - show_mixed_by_ideal g (1::1::2::nil)%Z.
+    - show_mixed_by_ideal g (2::3::3::nil)%Z.
+    - show_mixed_by_ideal g (1::1::2::nil)%Z.
     - destruct (Zle_lt_or_eq _ _ H2lea) as [H2a|H2a].
       + assert (3 <= a)%Z as H.
         { omega. }
         destruct (Zle_lt_or_eq _ _ H) as [H0|H0].
-        * show_mixed_by_ideal g (a::a::a::nil) (4::4::4::nil)%Z.
+        * show_mixed_by_ideal g (4::4::4::nil)%Z.
         * rewrite <- H0 in *.
           discriminate Htot.
       + rewrite <- H2a in *.
@@ -101,7 +163,7 @@ Section C3.
     - assert (1 + b <= c)%Z as H.
       { omega. }
       destruct (Zle_lt_or_eq _ _ H) as [H0|H0].
-      + show_mixed_by_ideal g (0::b::c::nil)%Z (0::1::3::nil)%Z.
+      + show_mixed_by_ideal g (0::1::3::nil)%Z.
       + rewrite <- H0 in Htot.
         clear -Htot.
         rewrite Z.even_add, Z.even_add, Z.even_add in Htot.
@@ -112,7 +174,7 @@ Section C3.
       + assert (2 <= b)%Z as H1.
         { omega. }
         destruct (Zle_lt_or_eq _ _ H1) as [H2|H2].
-        * show_mixed_by_ideal g (0::b::b::nil)%Z (0::3::3::nil)%Z.
+        * show_mixed_by_ideal g (0::3::3::nil)%Z.
         * rewrite <- H2 in *.
           left.
           exists 2, 2%Z.

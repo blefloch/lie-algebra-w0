@@ -37,15 +37,16 @@ Section A123.
       | [Hg : g = _ |- _]
         =>
         (right;
-         refine (mixed_by_ideal g lambda mu _) ;
-         split ;
+         refine (mixed_by_ideal g lambda mu _ _ _) ;
          [
            refine (mixed_by_hand g mu _) ;
            rewrite Hg ;
            simpl ; trivial
          |
+           tac_length
+         |
          rewrite Hg ;
-           unfold Zvec_short_sub, lie_is_dominant_revwt_alg ;
+           unfold Zvec_short_sub, lie_is_radical_revwt_alg ;
            simpl ;
            unfold Zvec_nondecb ;
            simpl_extra ;
@@ -1961,9 +1962,9 @@ Section main.
               fold h in Hradalgnu, Hnunotexc, Hmuexc.
               destruct (IHn Hn nu Hradalgnu) as [Hnuexc|Hnumix].
               { contradiction (Hnunotexc Hnuexc). }
-              refine (mixed_by_induction g lambda h nu _).
-              unfold g, h, Is_known_w0_branching_revwt_alg, lie_algebra_type.
-              repeat split.
+              refine (mixed_by_induction g lambda h nu _ _).
+              all : unfold g, h, Is_known_w0_branching_revwt_alg, lie_algebra_type.
+              all : repeat split.
               + exact Hnumix.
               + exact Hradalglambda.
               + exact Hradalgnu.
@@ -1987,7 +1988,6 @@ Section main.
                               H1p1q Htot Hknownbranching)
                      as [[nu [Hnubr Hnunotexc]]|[H|[H|[H|H]]]].
             - right.
-              refine (mixed_by_induction g lambda h nu _).
               assert (lie_is_radical_revwt_alg h nu = true) as Hradalgnu.
               {
                 unfold lie_is_radical_revwt_alg.
@@ -2001,8 +2001,9 @@ Section main.
               }
               destruct (IHn Hn nu Hradalgnu) as [Hnuexc|Hnumix].
               { contradiction (Hnunotexc Hnuexc). }
-              unfold g, h, Is_known_w0_branching_revwt_alg, lie_algebra_type.
-              repeat split.
+              refine (mixed_by_induction g lambda h nu _ _).
+              all : unfold g, h, Is_known_w0_branching_revwt_alg, lie_algebra_type.
+              all : repeat split.
               + exact Hnumix.
               + exact Hradalglambda.
               + exact Hradalgnu.
@@ -2045,6 +2046,6 @@ Section main.
             unfold g, h, Is_known_w0_branching_revwt_alg, lie_algebra_type.
             repeat split ; assumption.
           }
-          exact (or_intror (mixed_by_induction g lambda h mu (conj Hmumix Hkb2))).
+          exact (or_intror (mixed_by_induction g lambda h mu Hmumix Hkb2)).
   Qed.
 End main.
