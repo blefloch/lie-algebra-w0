@@ -809,30 +809,10 @@ Section nondecb_total.
        -> Zvec_total lambda = 0
        -> Zvec_total (hdn p lambda) <= 0)%Z.
   Proof.
-    pose (tmp := (fix tmp (lambda : list Z) p :=
-                    match p with
-                      | 0 => lambda
-                      | S p' => match lambda with
-                                  | nil => nil
-                                  | _::lambda' => tmp lambda' p'
-                                end
-                    end)).
-    assert (forall p lambda,
-              (hdn p lambda)++(tmp lambda p)
-              = lambda) as H.
-    {
-      induction p ; simpl.
-      - destruct lambda ; simpl ; trivial.
-      - destruct lambda ; simpl ; trivial.
-        rewrite (IHp lambda).
-        trivial.
-    }
-    intros lambda p Hnondec Htot.
-    pose (thm1 :=
-            thm_Zvec_nondecb_total_app
-              (hdn p lambda)
-              (tmp lambda p)).
-    rewrite H in thm1.
+    intros lambda p Hinc Htot.
+    pose (Hval := thm_hdn_tln _ p lambda).
+    rewrite Hval in Hinc, Htot.
+    pose (H := thm_Zvec_nondecb_total_app _ _ Hinc Htot).
     firstorder.
   Qed.
   Theorem thm_Zvec_nondecb_fact2 :
