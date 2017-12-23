@@ -73,6 +73,11 @@ Section data.
            | lie_B (exist _ 3 _), (2::2::2::nil)%Z => true
            | lie_B (exist _ 4 _), (0::1::2::2::nil)%Z => true
            | lie_B (exist _ 4 _), (0::0::3::3::nil)%Z => true
+           | lie_C (exist _ 3 _), (0::1::3::nil)%Z => true
+           | lie_C (exist _ 3 _), (1::1::2::nil)%Z => true
+           | lie_C (exist _ 3 _), (0::3::3::nil)%Z => true
+           | lie_C (exist _ 3 _), (2::3::3::nil)%Z => true
+           | lie_C (exist _ 3 _), (4::4::4::nil)%Z => true
            | _, _ => false
          end.
   (*TODO: add more mixed representations shown "by_hand".*)
@@ -90,6 +95,7 @@ Section branching.
       && (Zvec_short_allb Z.leb mu (tl (tl lambda))).
   Definition Is_known_w0_branching_A_revwt lambda mu :=
     radical_branching_A_two_revwt_b lambda mu = true.
+
   (*w0 of so(2n+1) coincides with w0 of so(4)xso(2n-3)*)
   (*Partial criterion for branching from so(2n+1) to so(2n-1)
     with zero so(2) charge.  Then do it twice.*)
@@ -104,6 +110,20 @@ Section branching.
     exists mu,
       known_radical_branching_B_one_revwt_b lambda mu = true
       /\ known_radical_branching_B_one_revwt_b mu nu = true.
+
+  (*w0 of sp(n) coincides with w0 of sl(2)xsp(n-1)*)
+  (*Partial criterion for branching from sp(n) to sp(n-1),
+    restricting to zero weight of sl(2).*)
+  Definition Is_known_w0_branching_C_revwt lambda mu :=
+    length lambda = S (length mu)
+    /\ lie_is_radical_revwt_type lie_C_type lambda = true
+    /\ lie_is_radical_revwt_type lie_C_type mu = true
+    /\ Zvec_short_allb
+         (fun a b => Z.even (Z.sub a b))
+         (Zvec_short_max lambda mu)
+         (Zvec_long_min (tl lambda) (tl mu))
+       = true.
+
   (*TODO: add more known branchings that preserve w0*)
   (*Put together all known branchings preserving w0.*)
   (*No need to check ranks of g and h as it is done by the Is_known_... functions.*)
@@ -113,6 +133,7 @@ Section branching.
     /\ match lie_algebra_type g, lie_algebra_type h with
          | lie_A_type, lie_A_type => Is_known_w0_branching_A_revwt lambda mu
          | lie_B_type, lie_B_type => Is_known_w0_branching_B_revwt lambda mu
+         | lie_C_type, lie_C_type => Is_known_w0_branching_C_revwt lambda mu
          | _, _ => False
        end.
 End branching.
