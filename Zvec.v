@@ -57,6 +57,13 @@ Section functions.
 End functions.
 
 Section Zhelpers.
+  Theorem thm_Z_of_nat_S :
+    forall n, Z.of_nat (S n) = (1 + Z.of_nat n)%Z.
+  Proof.
+    intros.
+    rewrite Nat2Z.inj_succ, <- Z.add_1_l.
+    trivial.
+  Qed.
   Theorem thm_gcd_pos :
     forall m n, (m >= 0 -> n > 0 -> Z.gcd m n > 0)%Z.
   Proof.
@@ -107,14 +114,32 @@ Section Zhelpers.
   Qed.
 End Zhelpers.
 
-Section theorems.
-  Theorem thm_Zvec_nondecb_nil :
-    Zvec_nondecb nil = true .
+Section misc.
+  Theorem thm_Zvec_mul_0 :
+    forall l, Zvec_mul 0%Z l = repeat 0%Z (length l).
   Proof.
-    unfold Zvec_nondecb.
-    simpl.
-    trivial.
+    induction l.
+    - trivial.
+    - simpl ; rewrite IHl ; firstorder.
   Qed.
+  Theorem thm_Zvec_eqb_eq :
+    forall lambda mu,
+      length lambda = length mu
+      -> Zvec_short_allb Z.eqb lambda mu = true
+         <-> lambda = mu.
+  Proof.
+    induction lambda.
+    - destruct mu ; simpl.
+      + tauto.
+      + discriminate.
+    - destruct mu ; simpl.
+      + discriminate.
+      + simpl_extra.
+        firstorder.
+  Qed.
+End misc.
+
+Section leb.
   Theorem thm_Zvec_leb_cons :
     forall a b lambda mu,
       Zvec_short_allb Z.leb (a::lambda) (b::mu) = true
@@ -200,11 +225,50 @@ Section theorems.
         destruct (IHmu1 mu2 nu1 nu2 Hlength) as [H2 H3].
         split ; firstorder.
   Qed.
+  Theorem thm_Zvec_leb_irrefl :
+    forall lambda mu,
+      length lambda = length mu
+      -> Zvec_short_allb Z.leb lambda mu = true
+      -> Zvec_short_allb Z.leb mu lambda = true
+      -> lambda = mu.
+  Proof.
+    induction lambda.
+    - destruct mu.
+      + trivial.
+      + simpl ; intros H ; discriminate H.
+    - destruct mu.
+      + simpl ; intros H ; discriminate H.
+      + simpl_extra.
+        firstorder.
+  Qed.
+  Theorem thm_Zvec_leb_nth :
+    forall n lambda mu a b,
+      n < length lambda
+      -> n < length mu
+      -> Zvec_short_allb Z.leb lambda mu = true
+      -> (nth n lambda a <= nth n mu b)%Z.
+  Proof.
+    induction n.
+    all : destruct lambda, mu ; simpl in * ; firstorder ; try omega.
+    all : autorewrite with rewritesome in *.
+    all : try (apply IHn ; try omega).
+    all : firstorder.
+  Qed.
+End leb.
+
+Section nondecb.
   Ltac tac_nondecb lambda :=
     destruct lambda ;
     unfold Zvec_nondecb ;
     simpl_extra ;
     firstorder.
+  Theorem thm_Zvec_nondecb_nil :
+    Zvec_nondecb nil = true .
+  Proof.
+    unfold Zvec_nondecb.
+    simpl.
+    trivial.
+  Qed.
   Theorem thm_Zvec_nondecb_01_geq :
     forall a b lambda,
       Zvec_nondecb (a::b::lambda) = true
@@ -347,6 +411,98 @@ Section theorems.
     - pose (H := thm_Zvec_nondecb_app2 lambda mu).
       firstorder.
   Qed.
+  Theorem thm_Zvec_nondecb_nth :
+    forall lambda p r a b,
+      Zvec_nondecb lambda = true
+      -> p < r
+      -> r < length lambda
+      -> (nth p lambda a <= nth r lambda b)%Z.
+  Proof.
+    intros.
+    destruct (nth_split lambda b H1) as [l2 [l5 [H2 H5]]].
+    rewrite H2 at 1.
+    rewrite app_nth1 at 1.
+    rewrite <- H5 in H0.
+    destruct (nth_split l2 a H0) as [l3 [l4 [H3 H4]]].
+    set (aa := nth p _ _) in *.
+    set (bb := nth r _ _) in *.
+    rewrite H2, H3, <- app_assoc in H.
+    destruct (thm_Zvec_nondecb_app _ _ H) as [_ H6].
+    simpl in H6.
+    exact (thm_Zvec_nondecb_app_hd _ _ _ _ H6).
+    omega.
+  Qed.
+  Theorem thm_Zvec_nondecb_hd_last_eq :
+    forall lambda a,
+      Zvec_nondecb lambda = true
+      -> hd a lambda = a
+      -> a = last lambda a
+      -> lambda = repeat a (length lambda).
+  Proof.
+    intros lambda z.
+    induction lambda.
+    - trivial.
+    - intros Hinc Hhd Hlast.
+      simpl in Hhd.
+      rewrite <- Hhd in *.
+      pose (Hinc2 := thm_Zvec_nondecb_cons _ _ Hinc).
+      destruct lambda as [|b [|c lambda]].
+      + simpl in * ; trivial.
+      + simpl in * ; rewrite Hlast ; trivial.
+      + assert (b::c::lambda <> nil) as H2; [discriminate|].
+        rewrite (app_removelast_last a H2) in Hinc2.
+        simpl in Hlast, Hinc2.
+        rewrite <- Hlast in Hinc2.
+        pose (Hba := thm_Zvec_nondecb_app_hd _ _ _ _ Hinc2).
+        pose (Hab := thm_Zvec_nondecb_01_geq _ _ _ Hinc).
+        assert (b = a) as Haeqb.
+        { clear - Hab Hba ; omega. }
+        simpl repeat.
+        rewrite list_eq_iff_hd_tl.
+        simpl repeat in IHlambda.
+        firstorder.
+        refine (IHlambda (thm_Zvec_nondecb_cons _ _ Hinc) _ _).
+        * assumption.
+        * assumption.
+  Qed.
+  Theorem thm_Zvec_nondecb_hdn :
+    forall p lambda,
+      Zvec_nondecb lambda = true
+      -> Zvec_nondecb (hdn p lambda) = true.
+  Proof.
+    intros.
+    destruct (le_lt_dec p (length lambda)) as [H0|H0].
+    - rewrite (thm_hdn_tln _ p lambda) in H.
+      pose (H1 := thm_Zvec_nondecb_app _ _ H).
+      tauto.
+    - rewrite (thm_hdn_long _ _ _ H0).
+      trivial.
+  Qed.
+  Theorem thm_Zvec_nondecb_tln :
+    forall p lambda,
+      Zvec_nondecb lambda = true
+      -> Zvec_nondecb (tln p lambda) = true.
+  Proof.
+    intros.
+    destruct (le_lt_dec p (length lambda)) as [H0|H0].
+    - rewrite (thm_hdn_tln _ p lambda) in H.
+      pose (H1 := thm_Zvec_nondecb_app _ _ H).
+      tauto.
+    - rewrite (thm_tln_long _ _ _ H0).
+      trivial.
+  Qed.
+  Theorem thm_Zvec_nondecb_repeat :
+    forall a n, Zvec_nondecb (repeat a n) = true.
+  Proof.
+    destruct n ; simpl ; firstorder.
+    induction n ; simpl ; firstorder.
+    apply thm_Zvec_nondecb_join2.
+    omega.
+    assumption.
+  Qed.
+End nondecb.
+
+Section total.
   Theorem thm_Zvec_total_app :
     forall lambda mu,
       Zvec_total (lambda++mu)
@@ -358,6 +514,236 @@ Section theorems.
       rewrite (IHlambda mu).
       exact (Zplus_assoc _ _ _).
   Qed.
+  Theorem thm_Zvec_total_mul :
+    forall m lambda,
+      (Zvec_total (Zvec_mul m lambda) = m * Zvec_total lambda)%Z.
+  Proof.
+    unfold Zvec_mul.
+    induction lambda ; simpl.
+    - omega.
+    - rewrite IHlambda.
+      rewrite Z.mul_add_distr_l.
+      trivial.
+  Qed.
+  Theorem thm_Zvec_total_repeat :
+    forall m a,
+      (Zvec_total (repeat a m) = (Z.of_nat m) * a)%Z.
+  Proof.
+    intros.
+    induction m.
+    - trivial.
+    - simpl repeat.
+      simpl Zvec_total.
+      rewrite IHm, thm_Z_of_nat_S.
+      rewrite Z.mul_add_distr_r.
+      omega.
+  Qed.
+End total.
+
+Section leb_nondecb.
+  Theorem thm_Zvec_nondecb_fact1 :
+    forall a b lambda,
+      (0 <= b)%Z
+      -> Zvec_nondecb (a::b::lambda) = true
+      -> Zvec_allb (Z.leb 0%Z) lambda = true.
+  Proof.
+    unfold Zvec_nondecb.
+    simpl.
+    intros a b lambda H1 H2.
+    simpl_destruct H2 as [H2 H3].
+    induction lambda.
+    - simpl ; trivial.
+    - simpl_extra.
+      simpl_destruct H3 as [H3 H4].
+      split.
+      + exact (Z.le_trans _ _ _ H1 H3).
+      + refine (IHlambda _).
+        simpl in H4.
+        generalize H4.
+        destruct lambda ; firstorder.
+        simpl_extra.
+        simpl_extra in H0.
+        firstorder.
+  Qed.
+  Theorem thm_Zvec_nondecb_fact3 :
+    forall a b lambda,
+      Zvec_nondecb (a::b::lambda) = true
+      -> Zvec_short_allb Z.leb (a::b::lambda) lambda = true.
+  Proof.
+    intros a b lambda Hab.
+    pose (Hb := thm_Zvec_nondecb_cons a (b::lambda) Hab).
+    unfold Zvec_nondecb, tl in Hab.
+    unfold Zvec_nondecb, tl in Hb.
+    refine (thm_Zvec_leb_trans32 _ _ _ _ Hab Hb).
+    simpl.
+    omega.
+  Qed.
+  Theorem thm_Zvec_nondecb_hd_leb:
+    forall lambda a,
+      Zvec_nondecb lambda = true
+      -> (a <= hd a lambda)%Z
+      -> Zvec_short_allb Z.leb (repeat a (length lambda)) lambda = true.
+  Proof.
+    induction lambda.
+    - simpl ; firstorder.
+    - intros.
+      simpl_extra.
+      simpl in H0.
+      firstorder.
+      refine (IHlambda a0 (thm_Zvec_nondecb_cons _ _ H) _).
+      destruct lambda ; simpl ;
+      [|unfold Zvec_nondecb in H ; simpl_destruct H as [H _]] ;
+      omega.
+  Qed.
+  Theorem thm_Zvec_nondecb_last_leb :
+    forall lambda a,
+      Zvec_nondecb (lambda ++ a::nil) = true
+      -> Zvec_short_allb Z.leb (lambda ++ a::nil)
+                         (repeat a (1 + length lambda)) = true.
+  Proof.
+    intros lambda a H.
+    assert (Zvec_allb (Z.geb a) lambda = true) as H0.
+    {
+      induction lambda.
+      - trivial.
+      - simpl in *.
+        simpl_extra.
+        split.
+        + rewrite Z.geb_le.
+          exact (thm_Zvec_nondecb_app_hd _ _ _ _ H).
+        + exact (IHlambda (thm_Zvec_nondecb_cons _ _ H)).
+    }
+    rewrite plus_comm, thm_repeat_plus.
+    simpl.
+    rewrite thm_Zvec_leb_app.
+    split.
+    - induction lambda.
+      + trivial.
+      + simpl_extra.
+        simpl_extra in H0.
+        rewrite Z.geb_le in H0.
+        pose (H2 := IHlambda (thm_Zvec_nondecb_cons _ _ H)).
+        firstorder.
+    - exact (thm_Zvec_leb_refl _).
+    - tac_length.
+  Qed.
+  Theorem thm_Zvec_nondecb_last_leb2 :
+    forall a lambda,
+      last lambda a = a
+      -> Zvec_nondecb lambda = true
+      -> Zvec_short_allb Z.leb lambda
+                         (repeat a (length lambda)) = true.
+  Proof.
+    intros a lambda.
+    destruct (list_eq_dec Z.eq_dec lambda nil) as [H|H].
+    - rewrite H in * ; simpl ; trivial.
+    - pose (H0 := app_removelast_last a H).
+      intros H1 H2.
+      rewrite H1 in *.
+      rewrite H0 in H2.
+      pose (H3 := thm_Zvec_nondecb_last_leb _ _ H2).
+      rewrite <- H0 in H3.
+      assert (1 + length (removelast lambda) = length lambda) as H4.
+      {
+        simpl_length.
+        destruct lambda ; simpl.
+        - contradiction (H (eq_refl _)).
+        - omega.
+      }
+      rewrite H4 in H3.
+      exact H3.
+  Qed.
+End leb_nondecb.
+
+Section leb_total.
+  Theorem thm_Zvec_leb_total :
+    forall mu lambda,
+      length mu <= length lambda
+      -> Zvec_short_allb Z.leb lambda mu = true
+      -> (Zvec_total (hdn (length mu) lambda)
+          <= Zvec_total mu)%Z.
+  Proof.
+    induction mu.
+    - simpl ; firstorder.
+    - destruct lambda.
+      + simpl ; firstorder.
+      + simpl.
+        intros H H0.
+        simpl_destruct H0 as [H0 H1].
+        pose (H2 := (IHmu _ (le_S_n _ _ H) H1)).
+        omega.
+  Qed.
+  Theorem thm_Zvec_leb_eqb_tot :
+    forall lambda mu,
+      length mu <= length lambda
+      -> Zvec_short_allb Z.leb lambda mu = true
+      -> (Zvec_short_allb Z.eqb lambda mu = true
+          <-> Zvec_total mu
+              = Zvec_total (hdn (length mu) lambda)).
+  Proof.
+    intros lambda mu Hlength Hleb.
+    split.
+    - generalize mu as mu0, lambda as lambda0, Hlength.
+      induction mu0.
+      + simpl ; firstorder.
+      + destruct lambda0.
+        * simpl ; firstorder.
+        * simpl.
+          intros H H0.
+          simpl_destruct H0 as [H0 H1].
+          rewrite H0.
+          rewrite <- (IHmu0 _ (le_S_n _ _ H) H1).
+          trivial.
+    - generalize mu as mu0, lambda as lambda0, Hlength, Hleb.
+      induction mu0.
+      + simpl ; firstorder.
+        destruct lambda0 ; firstorder.
+      + destruct lambda0.
+        * simpl ; firstorder.
+        * simpl.
+          intros H H0 H2.
+          simpl_destruct H0 as [H0 H1].
+          pose (H3 := le_S_n _ _ H).
+          pose (H4 := thm_Zvec_leb_total _ _ H3 H1).
+          simpl_extra.
+          split ; [|refine (IHmu0 _ H3 H1 _)] ; omega.
+  Qed.
+  Theorem thm_Zvec_leb_eq_tot :
+    forall lambda mu : list Z,
+      length lambda = length mu
+      -> Zvec_short_allb Z.leb lambda mu = true
+      -> Zvec_total lambda = Zvec_total mu <-> lambda = mu.
+  Proof.
+    intros lambda mu Hlength Hleb.
+    assert (length mu <= length lambda) as Hlength2.
+    { omega. }
+    pose (H := thm_Zvec_leb_eqb_tot lambda mu Hlength2 Hleb).
+    assert (length lambda <= length mu) as Hlength3.
+    { omega. }
+    rewrite (thm_hdn_id _ _ _ Hlength3) in H.
+    rewrite Z.eq_sym_iff, <- H.
+    exact (thm_Zvec_eqb_eq lambda mu Hlength).
+  Qed.
+  Theorem thm_Zvec_leb_total_same_length :
+    forall mu lambda,
+      length mu = length lambda
+      -> Zvec_short_allb Z.leb lambda mu = true
+      -> (Zvec_total lambda <= Zvec_total mu)%Z.
+  Proof.
+    induction mu.
+    - destruct lambda.
+      + omega.
+      + discriminate.
+    - destruct lambda.
+      + discriminate.
+      + simpl_extra.
+        intros H [H0 H1].
+        pose (H2 := IHmu lambda H H1).
+        omega.
+  Qed.
+End leb_total.
+
+Section nondecb_total.
   Theorem thm_Zvec_nondecb_total_app :
     forall lambda mu,
       Zvec_nondecb (lambda++mu) = true
@@ -417,41 +803,37 @@ Section theorems.
     rewrite (thm_Zvec_total_app _ _) in Htot.
     destruct Hor as [H0|H0] ; omega.
   Qed.
-  Theorem thm_Zvec_total_mrev:
-    forall lambda,
-      (Zvec_total (rev (map Z.opp lambda))
-       = - Zvec_total lambda)%Z.
+  Theorem thm_Zvec_nondecb_partialsum :
+    (forall lambda p,
+       Zvec_nondecb lambda = true
+       -> Zvec_total lambda = 0
+       -> Zvec_total (hdn p lambda) <= 0)%Z.
   Proof.
-    induction lambda.
-    - trivial.
-    - simpl.
-      rewrite thm_Zvec_total_app, IHlambda.
-      simpl.
-      omega.
-  Qed.
-  Theorem thm_Zvec_nondecb_fact1 :
-    forall a b lambda,
-      (0 <= b)%Z
-      -> Zvec_nondecb (a::b::lambda) = true
-      -> Zvec_allb (Z.leb 0%Z) lambda = true.
-  Proof.
-    unfold Zvec_nondecb.
-    simpl.
-    intros a b lambda H1 H2.
-    simpl_destruct H2 as [H2 H3].
-    induction lambda.
-    - simpl ; trivial.
-    - simpl_extra.
-      simpl_destruct H3 as [H3 H4].
-      split.
-      + exact (Z.le_trans _ _ _ H1 H3).
-      + refine (IHlambda _).
-        simpl in H4.
-        generalize H4.
-        destruct lambda ; firstorder.
-        simpl_extra.
-        simpl_extra in H0.
-        firstorder.
+    pose (tmp := (fix tmp (lambda : list Z) p :=
+                    match p with
+                      | 0 => lambda
+                      | S p' => match lambda with
+                                  | nil => nil
+                                  | _::lambda' => tmp lambda' p'
+                                end
+                    end)).
+    assert (forall p lambda,
+              (hdn p lambda)++(tmp lambda p)
+              = lambda) as H.
+    {
+      induction p ; simpl.
+      - destruct lambda ; simpl ; trivial.
+      - destruct lambda ; simpl ; trivial.
+        rewrite (IHp lambda).
+        trivial.
+    }
+    intros lambda p Hnondec Htot.
+    pose (thm1 :=
+            thm_Zvec_nondecb_total_app
+              (hdn p lambda)
+              (tmp lambda p)).
+    rewrite H in thm1.
+    firstorder.
   Qed.
   Theorem thm_Zvec_nondecb_fact2 :
     forall a b lambda,
@@ -468,22 +850,21 @@ Section theorems.
     - simpl_extra.
       firstorder.
   Qed.
-  Theorem thm_Zvec_nondecb_fact3 :
-    forall a b lambda,
-      Zvec_nondecb (a::b::lambda) = true
-      -> Zvec_short_allb Z.leb (a::b::lambda) lambda = true.
-  Proof.
-    intros a b lambda Hab.
-    pose (Hb := thm_Zvec_nondecb_cons a (b::lambda) Hab).
-    unfold Zvec_nondecb, tl in Hab.
-    unfold Zvec_nondecb, tl in Hb.
-    refine (thm_Zvec_leb_trans32 _ _ _ _ Hab Hb).
-    simpl.
-    omega.
-  Qed.
-End theorems.
+End nondecb_total.
 
-Section more_list_thm.
+Section mrev.
+  Theorem thm_Zvec_total_mrev:
+    forall lambda,
+      (Zvec_total (rev (map Z.opp lambda))
+       = - Zvec_total lambda)%Z.
+  Proof.
+    induction lambda.
+    - trivial.
+    - simpl.
+      rewrite thm_Zvec_total_app, IHlambda.
+      simpl.
+      omega.
+  Qed.
   Theorem thm_Zvec_nondecb_mrev :
     forall lambda,
       Zvec_nondecb lambda = true
@@ -593,189 +974,7 @@ Section more_list_thm.
     - assumption.
     - rewrite thm_Zvec_leb_app in H1 ; firstorder.
   Qed.
-  Theorem thm_Zvec_total_mul :
-    forall m lambda,
-      (Zvec_total (Zvec_mul m lambda) = m * Zvec_total lambda)%Z.
-  Proof.
-    unfold Zvec_mul.
-    induction lambda ; simpl.
-    - omega.
-    - rewrite IHlambda.
-      rewrite Z.mul_add_distr_l.
-      trivial.
-  Qed.
-  Theorem thm_Z_of_nat_S :
-    forall n, Z.of_nat (S n) = (1 + Z.of_nat n)%Z.
-  Proof.
-    intros.
-    rewrite Nat2Z.inj_succ, <- Z.add_1_l.
-    trivial.
-  Qed.
-  Theorem thm_Zvec_total_repeat :
-    forall m a,
-      (Zvec_total (repeat a m) = (Z.of_nat m) * a)%Z.
-  Proof.
-    intros.
-    induction m.
-    - trivial.
-    - simpl repeat.
-      simpl Zvec_total.
-      rewrite IHm, thm_Z_of_nat_S.
-      rewrite Z.mul_add_distr_r.
-      omega.
-  Qed.
-  Theorem thm_Zvec_nondecb_repeat :
-    forall a n, Zvec_nondecb (repeat a n) = true.
-  Proof.
-    destruct n ; simpl ; firstorder.
-    induction n ; simpl ; firstorder.
-    apply thm_Zvec_nondecb_join2.
-    omega.
-    assumption.
-  Qed.
-  (*Here Zvec_short_map_zip is used to pick the first (length mu) components of lambda*)
-  Theorem thm_Zvec_leb_total :
-    forall mu lambda,
-      length mu <= length lambda
-      -> Zvec_short_allb Z.leb lambda mu = true
-      -> (Zvec_total (Zvec_short_map_zip (fun _ a => a) mu lambda)
-          <= Zvec_total mu)%Z.
-  Proof.
-    induction mu.
-    - simpl ; firstorder.
-    - destruct lambda.
-      + simpl ; firstorder.
-      + simpl.
-        intros H H0.
-        simpl_destruct H0 as [H0 H1].
-        pose (H2 := (IHmu _ (le_S_n _ _ H) H1)).
-        omega.
-  Qed.
-  Theorem thm_Zvec_leb_eqb_tot :
-    forall lambda mu,
-      length mu <= length lambda
-      -> Zvec_short_allb Z.leb lambda mu = true
-      -> (Zvec_short_allb Z.eqb lambda mu = true
-          <-> Zvec_total mu
-              = Zvec_total (Zvec_short_map_zip (fun _ a => a) mu lambda)).
-  Proof.
-    intros lambda mu Hlength Hleb.
-    split.
-    - generalize mu as mu0, lambda as lambda0, Hlength.
-      induction mu0.
-      + simpl ; firstorder.
-      + destruct lambda0.
-        * simpl ; firstorder.
-        * simpl.
-          intros H H0.
-          simpl_destruct H0 as [H0 H1].
-          rewrite H0.
-          rewrite <- (IHmu0 _ (le_S_n _ _ H) H1).
-          trivial.
-    - generalize mu as mu0, lambda as lambda0, Hlength, Hleb.
-      induction mu0.
-      + simpl ; firstorder.
-        destruct lambda0 ; firstorder.
-      + destruct lambda0.
-        * simpl ; firstorder.
-        * simpl.
-          intros H H0 H2.
-          simpl_destruct H0 as [H0 H1].
-          pose (H3 := le_S_n _ _ H).
-          pose (H4 := thm_Zvec_leb_total _ _ H3 H1).
-          simpl_extra.
-          split ; [|refine (IHmu0 _ H3 H1 _)] ; omega.
-  Qed.
-  Theorem thm_Zvec_nondecb_partialsum :
-    (forall lambda mu,
-       Zvec_nondecb lambda = true
-       -> Zvec_total lambda = 0
-       -> Zvec_total (Zvec_short_map_zip (fun _ a : Z => a) mu lambda) <= 0)%Z.
-  Proof.
-    pose (tmp := (fix tmp (lambda mu : list Z) :=
-                    match mu with
-                      | nil => lambda
-                      | _::mu' => match lambda with
-                                    | nil => nil
-                                    | _::lambda' => tmp lambda' mu'
-                                  end
-                    end)).
-    assert (forall mu lambda,
-              (Zvec_short_map_zip (fun _ a : Z => a) mu lambda)++(tmp lambda mu)
-              = lambda) as H.
-    {
-      induction mu ; simpl.
-      - destruct lambda ; simpl ; trivial.
-      - destruct lambda ; simpl ; trivial.
-        rewrite (IHmu lambda).
-        trivial.
-    }
-    intros lambda mu Hnondec Htot.
-    pose (thm1 :=
-            thm_Zvec_nondecb_total_app
-              (Zvec_short_map_zip (fun _ a : Z => a) mu lambda)
-              (tmp lambda mu)).
-    rewrite H in thm1.
-    firstorder.
-  Qed.
-  Theorem thm_Zvec_mul_0 :
-    forall l, Zvec_mul 0%Z l = repeat 0%Z (length l).
-  Proof.
-    induction l.
-    - trivial.
-    - simpl ; rewrite IHl ; firstorder.
-  Qed.
-  Theorem thm_Zvec_leb_leb_eq :
-    forall lambda mu,
-      length lambda = length mu
-      -> Zvec_short_allb Z.leb lambda mu = true
-      -> Zvec_short_allb Z.leb mu lambda = true
-      -> lambda = mu.
-  Proof.
-    induction lambda.
-    - destruct mu.
-      + trivial.
-      + simpl ; intros H ; discriminate H.
-    - destruct mu.
-      + simpl ; intros H ; discriminate H.
-      + simpl_extra.
-        firstorder.
-  Qed.
-  Theorem thm_Zvec_leb_nth :
-    forall n lambda mu a b,
-      n < length lambda
-      -> n < length mu
-      -> Zvec_short_allb Z.leb lambda mu = true
-      -> (nth n lambda a <= nth n mu b)%Z.
-  Proof.
-    induction n.
-    all : destruct lambda, mu ; simpl in * ; firstorder ; try omega.
-    all : autorewrite with rewritesome in *.
-    all : try (apply IHn ; try omega).
-    all : firstorder.
-  Qed.
-  Theorem thm_Zvec_nondecb_nth :
-    forall lambda p r a b,
-      Zvec_nondecb lambda = true
-      -> p < r
-      -> r < length lambda
-      -> (nth p lambda a <= nth r lambda b)%Z.
-  Proof.
-    intros.
-    destruct (nth_split lambda b H1) as [l2 [l5 [H2 H5]]].
-    rewrite H2 at 1.
-    rewrite app_nth1 at 1.
-    rewrite <- H5 in H0.
-    destruct (nth_split l2 a H0) as [l3 [l4 [H3 H4]]].
-    set (aa := nth p _ _) in *.
-    set (bb := nth r _ _) in *.
-    rewrite H2, H3, <- app_assoc in H.
-    destruct (thm_Zvec_nondecb_app _ _ H) as [_ H6].
-    simpl in H6.
-    exact (thm_Zvec_nondecb_app_hd _ _ _ _ H6).
-    omega.
-  Qed.
-End more_list_thm.
+End mrev.
 
 Tactic Notation "tac_nondecb" :=
   repeat
@@ -803,3 +1002,19 @@ Tactic Notation "tac_nondecb" :=
                 | [ |- _ ]
                   => try omega
               end).
+
+Hint Rewrite
+     thm_Zvec_total_app
+     thm_Zvec_total_repeat
+     thm_Z_of_nat_S
+     Z.mul_add_distr_r
+     Z.add_assoc
+     Z.mul_1_l
+     Z.mul_1_r
+     Z.mul_0_l
+     Z.mul_0_r
+: rewritetotal.
+Tactic Notation "simpl_total" :=
+  repeat (simpl || autorewrite with rewritetotal).
+Tactic Notation "simpl_total" "in" hyp(H) :=
+  repeat (simpl in H || autorewrite with rewritetotal in H).

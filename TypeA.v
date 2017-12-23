@@ -12,20 +12,27 @@ Require Import Data.
 Require Import TypeAll.
 Open Scope nat_scope.
 
-Section helpers.
-  Definition nat_ind2
-             (P : nat -> Prop)
-             (f0 : P 0) (f1 : P 1)
-             (fn : forall (n : nat), P n -> P (S (S n))) :=
-    fix F (n : nat) : P n :=
-    match n as n0 return (P n0) with
-      | 0 => f0
-      | 1 => f1
-      | S (S n0) => fn n0 (F n0)
-    end.
-End helpers.
+(*TODOs for this file :
+  - Perhaps use something like the following.
+    Variable g : lie_algebra.
+    Variable HgAtype : lie_algebra_type g = lie_A_type.
+    Variable lambda : list Z.
+    Variable Hrad : lie_is_radical_revwt_alg g lambda = true.
+  - Delete unused "mrev" section here and in Zvec.v.
+*)
 
-Section theorems_for_A_type.
+Ltac tac_nth_split m lambda a l1 l2 H3 H5 H12 H13 H14 :=
+  (
+    simpl tl in *;
+    simpl in H5;
+    simpl_length in H3;
+    assert (m < length lambda) as H12;
+    [simpl_length ; omega |] ;
+    destruct (nth_split lambda a H12) as [l1 [l2 [H13 H14]]] ;
+    rewrite H13 in *
+  ).
+
+Section A123.
   Ltac show_mixed_by_ideal g lambda mu :=
     match goal with
       | [Hg : g = _ |- _]
@@ -154,6 +161,9 @@ Section theorems_for_A_type.
       + (*a=b=c<=d implies (a,b,c,d)=-a(-1,-1,-1,3) exceptional*)
         show_exceptional g 1 (-a)%Z.
   Qed.
+End A123.
+
+Section exhibit_branching.
   Local Fixpoint tmp_A_pred (lambda mu : list Z) :=
     match lambda with
       | nil => nil
@@ -404,7 +414,7 @@ Section theorems_for_A_type.
         rewrite H6 in H5.
         rewrite H2 in H5.
         pose (H7 := thm_Zvec_nondecb_partialsum
-                      lambda (tmp_A_get_repeat lambda lambda2 m) Hinc Htot).
+                      lambda (length (tmp_A_get_repeat lambda lambda2 m)) Hinc Htot).
         rewrite <- H5 in H7.
         omega.
     }
@@ -531,6 +541,9 @@ Section theorems_for_A_type.
         * exact (thm_A_pred_length0 _ _).
         * exact (thm_A_pred_leb _ _).
   Qed.
+End exhibit_branching.
+
+Section mrev.
   Theorem thm_A_radical_mrev :
     forall lambda,
       lie_is_radical_revwt_type lie_A_type lambda = true
@@ -561,6 +574,9 @@ Section theorems_for_A_type.
     - apply thm_Zvec_leb_mrev1. assumption. assumption.
     - apply thm_Zvec_leb_mrev2. assumption. assumption.
   Qed.
+End mrev.
+
+Section exceptional_structure.
   Theorem thm_A_zero_exceptional :
     forall g,
       lie_algebra_type g = lie_A_type
@@ -581,7 +597,7 @@ Section theorems_for_A_type.
     simpl.
     trivial.
   Qed.
-  Theorem thm_A_exceptional_twoval :
+  Theorem thm_A_exceptional_repeat2 :
     forall g,
       lie_algebra_type g = lie_A_type
       -> forall lambda,
@@ -677,7 +693,7 @@ Section theorems_for_A_type.
            -> lie_is_radical_revwt_type lie_A_type lambda = true.
   Proof.
     intros g Hgtype lambda Hexc.
-    destruct (thm_A_exceptional_twoval g Hgtype lambda Hexc)
+    destruct (thm_A_exceptional_repeat2 g Hgtype lambda Hexc)
       as [a [b [p [q [Hab Hlambda]]]]].
     pose (Htot := thm_A_exceptional_total g Hgtype lambda Hexc).
     unfold lie_is_radical_revwt_type.
@@ -707,7 +723,7 @@ Section theorems_for_A_type.
                     /\ lambda = repeat a p ++ repeat b q).
   Proof.
     intros g Hgtype lambda Hexc.
-    destruct (thm_A_exceptional_twoval g Hgtype lambda Hexc)
+    destruct (thm_A_exceptional_repeat2 g Hgtype lambda Hexc)
       as [a [b [p [q [Hab Hlambda]]]]].
     pose (Htot := thm_A_exceptional_total g Hgtype lambda Hexc).
     rewrite Hlambda, thm_Zvec_total_app,
@@ -759,13 +775,159 @@ Section theorems_for_A_type.
       autorewrite with rewritelength.
       trivial.
   Qed.
-  Definition twovalA (a b : Z) (p q : nat) :=
-    repeat a p ++ repeat b q.
-  Theorem thm_twovalA_ntha :
+End exceptional_structure.
+
+Section exceptional_from_bounds.
+  Theorem thm_A_exceptional_from_bounds1 :
+    forall g lambda a,
+      lie_algebra_type g = lie_A_type
+      -> lie_is_radical_revwt_type lie_A_type lambda = true
+      -> length lambda = lie_embedding_dim g
+      -> (a < 0)%Z
+      -> nth 0 lambda a = a
+      -> a = nth (length lambda - 2) lambda a
+      -> Is_exceptional_revwt_alg g lambda.
+  Proof.
+    intros g lambda a Hgtype Hrad Hlength Ha Hnth0 Hnth1.
+    destruct g as [[n Hn]| | | | | | | | ] ;
+      try (simpl in Hgtype; discriminate Hgtype).
+    unfold lie_is_radical_revwt_type in Hrad.
+    simpl_destruct Hrad as [Hinc Htot].
+    simpl in Hlength.
+    exists 1, (-a)%Z.
+    unfold is_exceptional_multiplier, lie_radical_fundamental_revwt_alg.
+    unfold lie_rank, lie_embedding_dim, plus.
+    assert (((1 =? 0) || (n <? 1)) = false) as H0.
+    { simpl. rewrite Nat.ltb_nlt. omega. }
+    rewrite H0.
+    split.
+    + clear - Ha Hn.
+      assert (~(-a < 0)%Z) as Ha1 ; [omega|].
+      assert (~(-a = 0)%Z) as Ha2 ; [omega|].
+      rewrite <- Z.ltb_nlt in Ha1.
+      rewrite <- Z.eqb_neq in Ha2.
+      rewrite Ha1, Ha2.
+      rewrite orb_true_r, orb_true_l.
+      trivial.
+    + rewrite <- thm_Z_of_nat_S.
+      set (t := Z.gcd _ _) in * ; compute in t ; unfold t in * ; clear t.
+      rewrite Zdiv_1_r, Zdiv_1_r, thm_S_minus_1.
+      unfold Zvec_mul.
+      rewrite map_app, thm_repeat_map.
+      rewrite Z.mul_opp_comm.
+      set (t := (- - Z.of_nat 1)%Z) in * ; compute in t ; unfold t in * ; clear t.
+      rewrite Z.mul_1_r.
+      unfold repeat at 2, map.
+      assert (n <= length lambda) as Hlength2.
+      { clear - Hlength. omega. }
+      assert (hdn n lambda = repeat a n) as Hhd.
+      {
+        assert (hd a (hdn n lambda) = a) as Hhdnhd.
+        {
+          rewrite thm_hd_hdn, <- thm_nth_0_hd.
+          destruct n ; [clear -Hn ; omega|assumption].
+        }
+        assert (a = last (hdn n lambda) a) as Hhdnlast.
+        {
+          rewrite Hlength, Nat.sub_succ in Hnth1.
+          rewrite thm_last_hdn ; [|assumption].
+          destruct n ; [trivial|assumption].
+        }
+        rewrite (thm_Zvec_nondecb_hd_last_eq
+                   _ _ (thm_Zvec_nondecb_hdn n lambda Hinc) Hhdnhd Hhdnlast).
+        simpl_length.
+        rewrite (min_l _ _ Hlength2).
+        trivial.
+      }
+      pose (Hlambdaval := thm_hdn_tln _ n lambda).
+      rewrite Hhd in Hlambdaval.
+      assert (length (tln n lambda) = 1) as Hlength3.
+      { simpl_length. omega. }
+      destruct (tln n lambda) as [|x [|]] ;
+        try (clear -Hlength3 ; simpl in *; omega).
+      simpl in *.
+      assert (x = -a * Z.of_nat n)%Z as Hx.
+      {
+        rewrite Hlambdaval in Htot.
+        simpl_total in Htot.
+        clear -Htot.
+        rewrite <- Zopp_mult_distr_l, Z.mul_comm.
+        omega.
+      }
+      rewrite <- Hx, <- Hlambdaval.
+      trivial.
+  Qed.
+  Theorem thm_A_exceptional_from_bounds2 :
+    forall g lambda b,
+      lie_algebra_type g = lie_A_type
+      -> lie_is_radical_revwt_type lie_A_type lambda = true
+      -> length lambda = lie_embedding_dim g
+      -> (0 < b)%Z
+      -> nth 1 lambda b = b
+      -> b = nth (length lambda - 1) lambda b
+      -> Is_exceptional_revwt_alg g lambda.
+  Proof.
+    intros g lambda b Hgtype Hrad Hlength Hb Hnth0 Hnth1.
+    destruct g as [[n Hn]| | | | | | | | ] ;
+      try (simpl in Hgtype; discriminate Hgtype).
+    unfold lie_is_radical_revwt_type in Hrad.
+    simpl_destruct Hrad as [Hinc Htot].
+    simpl in Hlength.
+    exists n, b.
+    unfold is_exceptional_multiplier, lie_radical_fundamental_revwt_alg.
+    unfold lie_rank, lie_embedding_dim, plus.
+    assert (((n =? 0) || (n <? n)) = false) as H0.
+    {
+      rewrite (Nat.ltb_irrefl n).
+      destruct n ; firstorder ; omega.
+    }
+    rewrite H0.
+    split.
+    + clear - Hb Hn.
+      assert (~(b < 0)%Z) as Ha1 ; [omega|].
+      assert (~(b = 0)%Z) as Ha2 ; [omega|].
+      rewrite <- Z.ltb_nlt in Ha1.
+      rewrite <- Z.eqb_neq in Ha2.
+      rewrite Ha1, Ha2, (Nat.eqb_refl n), orb_true_r.
+      trivial.
+    + rewrite Z.gcd_add_diag_r, Z.gcd_1_r, Z.div_1_r, Z.div_1_r.
+      assert (S n - n = 1) as H1.
+      { omega. }
+      rewrite H1.
+      simpl.
+      unfold Zvec_mul.
+      rewrite thm_repeat_map, Z.mul_1_r.
+      rewrite thm_nth_last in Hnth1.
+      destruct lambda as [|x lambda] ; [clear -Hlength ; simpl in * ; omega |].
+      simpl_extra.
+      simpl_extra in Hlength.
+      assert (lambda = repeat b n) as Hval.
+      {
+        rewrite <- Hlength.
+        refine (thm_Zvec_nondecb_hd_last_eq _ _ _ _ _).
+        - exact (thm_Zvec_nondecb_cons _ _ Hinc).
+        - simpl in Hnth0.
+          rewrite thm_nth_0_hd in Hnth0.
+          assumption.
+        - destruct lambda.
+          + trivial.
+          + simpl in *.
+            assumption.
+      }
+      firstorder.
+      rewrite Hval in Htot.
+      simpl_total in Htot.
+      rewrite Z.mul_comm, <- Zopp_mult_distr_l.
+      omega.
+  Qed.
+End exceptional_from_bounds.
+
+Section repeat2_branching.
+  Theorem thm_repeat2_ntha :
     forall a b p q k lambda,
       2 <= k
       -> k < p
-      -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+      -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
       -> nth k lambda a = a.
   Proof.
     intros a b p q k lambda Hk H H0.
@@ -776,7 +938,7 @@ Section theorems_for_A_type.
     firstorder.
     destruct lambda as [|l0 [|l1 lambda]] ; simpl; trivial.
     destruct p as [|[|p]] ; simpl; try (clear -H ; omega).
-    unfold twovalA in H1.
+    unfold repeat2 in H1.
     simpl tl in H1.
     assert (S (S p) = p + 2) as H7.
     { omega. }
@@ -786,7 +948,7 @@ Section theorems_for_A_type.
     simpl in H0.
     autorewrite with rewritelength rewritesome in H0.
     generalize H1, H9.
-    rewrite (thm_hdn_tln Z p lambda) ; [| clear -H0 ; omega].
+    rewrite (thm_hdn_tln Z p lambda).
     set (lam1 := hdn p lambda).
     set (lam2 := tln p lambda).
     assert (length lam1 = length (repeat a p)) as H14.
@@ -799,7 +961,7 @@ Section theorems_for_A_type.
       omega.
     }
     rewrite thm_Zvec_leb_app, thm_Zvec_leb_app ; firstorder.
-    rewrite (thm_Zvec_leb_leb_eq _ _ H14 H11 H10).
+    rewrite (thm_Zvec_leb_irrefl _ _ H14 H11 H10).
     rewrite app_nth1.
     - generalize k, p, a.
       induction k0 ; destruct p0 ; simpl ; trivial.
@@ -807,15 +969,15 @@ Section theorems_for_A_type.
       apply lt_S_n, lt_S_n in H.
       assumption.
   Qed.
-  (*Revise the proof of thm_twovalA_ntha to look more like thm_twovalA_nthb.*)
-  Theorem thm_twovalA_nthb :
+  (*Revise the proof of thm_repeat2_ntha to look more like thm_repeat2_nthb.*)
+  Theorem thm_repeat2_nthb :
     forall a b p q k lambda,
       2 + p <= k
       -> k < p + q
-      -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+      -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
       -> nth k lambda b = b.
   Proof.
-    unfold twovalA.
+    unfold repeat2.
     intros.
     unfold Is_known_w0_branching_A_revwt,
       radical_branching_A_two_revwt_b, lie_is_radical_revwt_type in *.
@@ -833,26 +995,14 @@ Section theorems_for_A_type.
     exact (Z.le_antisymm _ _ Hupper Hlower).
     all : clear -H H0 ; omega.
   Qed.
-
-  Ltac tac_nth_split m lambda a l1 l2 H3 H5 H12 H13 H14 :=
-    (
-      simpl tl in *;
-      simpl in H5;
-      simpl_length in H3;
-      assert (m < length lambda) as H12;
-      [simpl_length ; omega |] ;
-      destruct (nth_split lambda a H12) as [l1 [l2 [H13 H14]]] ;
-      rewrite H13 in *
-    ).
-
-  Theorem thm_twovalA_nthc :
+  Theorem thm_repeat2_nthc :
     forall a b p q lambda,
       (a < 0)%Z
       -> (0 < b)%Z
       -> 0 < p
       -> 0 < q
       -> 1 < p \/ 1 < q
-      -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+      -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
       -> (nth 0 lambda a <= a
           /\ a <= nth (1 + p) lambda a
           /\ nth p lambda b <= b
@@ -876,13 +1026,13 @@ Section theorems_for_A_type.
       + simpl.
         simpl tl in *.
         tac_nth_split p lambda a l1 l2 Hlength Ha H12 H13 H14.
-        unfold twovalA in Hml.
+        unfold repeat2 in Hml.
         rewrite thm_repeat_fact1, thm_Zvec_leb_app in Hml ; [|tac_length].
         simpl_destruct Hml as [_ [H _]].
         rewrite <- H13.
         assumption.
     - tac_nth_split (S p) lambda b l1 l2 Hlength Ha H12 H13 H14.
-      unfold twovalA in Hlm.
+      unfold repeat2 in Hlm.
       rewrite thm_Zvec_leb_app in Hlm ; [|tac_length].
       simpl_destruct Hlm as [_ [H _]].
       rewrite <- H13.
@@ -894,19 +1044,18 @@ Section theorems_for_A_type.
       + simpl.
         simpl tl in *.
         tac_nth_split (p + S q) lambda b l1 l2 Hlength Ha H12 H13 H14.
-        unfold twovalA in Hml.
+        unfold repeat2 in Hml.
         rewrite <- (Nat.add_1_r q) in Hml at 1.
         rewrite thm_repeat_plus, app_assoc, thm_Zvec_leb_app in Hml ; [|tac_length].
         simpl_destruct Hml as [_ H].
         rewrite <- H13.
         assumption.
   Qed.
-
-  Theorem thm_twovalA_branching : (*Probably useless*)
+  Theorem thm_repeat2_branching : (*Probably useless*)
     forall lambda a b p q,
       2 <= p
       -> 2 <= q
-      -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+      -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
       -> exists l0 l1 l2 l3 l4 l5,
            lambda = l0::l1::(repeat a (p - 2))
                       ++ l2::l3::(repeat b (q - 2))
@@ -916,7 +1065,7 @@ Section theorems_for_A_type.
     unfold Is_known_w0_branching_A_revwt, radical_branching_A_two_revwt_b in H.
     autorewrite with rewritesome in H.
     destruct H as [[[[Hlength Hradl] Hradm] Hlm] Hml].
-    unfold twovalA in Hlength.
+    unfold repeat2 in Hlength.
     autorewrite with rewritelength in Hlength.
     assert (length lambda >= 6) as Hlength2.
     {
@@ -926,7 +1075,7 @@ Section theorems_for_A_type.
     destruct lambda as [|l0 [|l1 lambda]] ; simpl in Hlength2 ; try omega.
     autorewrite with rewritelength rewritesome in Hlength.
     exists l0, l1.
-    unfold twovalA in Hlm, Hml.
+    unfold repeat2 in Hlm, Hml.
     assert (p = 2 + (p - 2)) as Hp2.
     { clear -Hp. omega. }
     assert (p = (p - 2) + 2) as Hp3.
@@ -938,7 +1087,7 @@ Section theorems_for_A_type.
     simpl_destruct Hlm as [_ [_ Hlm]].
     assert ((p - 2) <= length lambda) as Hp4.
     { clear -Hq Hlength. omega. }
-    pose (Hlsplit := thm_hdn_tln _ _ _ Hp4).
+    pose (Hlsplit := thm_hdn_tln _ (p - 2) lambda).
     set (mu := hdn _ _) in *.
     set (nu := tln _ _) in *.
     rewrite Hlsplit in *.
@@ -946,6 +1095,7 @@ Section theorems_for_A_type.
     {
       unfold mu.
       autorewrite with rewritelength.
+      rewrite Hlsplit.
       exact (Min.min_l _ _ Hp4).
     }
     rewrite (thm_Zvec_leb_app _ _ _ _ Hmulength) in Hlm.
@@ -953,7 +1103,7 @@ Section theorems_for_A_type.
     simpl in Hml.
     rewrite (thm_Zvec_leb_app _ _ _ _ (eq_sym Hmulength)) in Hml.
     destruct Hml as [Hml1 Hml2].
-    pose (Hmu := thm_Zvec_leb_leb_eq _ _ Hmulength Hlm1 Hml1).
+    pose (Hmu := thm_Zvec_leb_irrefl _ _ Hmulength Hlm1 Hml1).
     clearbody Hmu.
     rewrite Hmu in *.
     simpl_length in Hlength.
@@ -976,7 +1126,7 @@ Section theorems_for_A_type.
     simpl in Hlength.
     assert (q - 2 <= length nu) as Hq4.
     { clear - Hp Hq Hlength. omega. }
-    pose (Hnsplit := thm_hdn_tln _ _ _ Hq4).
+    pose (Hnsplit := thm_hdn_tln _ (q - 2) nu).
     set (rho := hdn _ _) in *.
     set (sigma := tln _ _) in *.
     rewrite Hnsplit in *.
@@ -984,6 +1134,7 @@ Section theorems_for_A_type.
     {
       unfold rho.
       autorewrite with rewritelength.
+      rewrite Hnsplit.
       exact (Min.min_l _ _ Hq4).
     }
     rewrite (app_nil_end (repeat b (q - 2))) in Hlm2.
@@ -991,7 +1142,7 @@ Section theorems_for_A_type.
     destruct Hlm2 as [Hlm1 Hlm2].
     rewrite (thm_Zvec_leb_app _ _ _ _ (eq_sym Hrholength)) in Hml2.
     destruct Hml2 as [Hml1 Hml2].
-    pose (Hrho := thm_Zvec_leb_leb_eq _ _ Hrholength Hlm1 Hml1).
+    pose (Hrho := thm_Zvec_leb_irrefl _ _ Hrholength Hlm1 Hml1).
     clearbody Hrho.
     rewrite Hrho in *.
     simpl_length in Hlength.
@@ -1005,7 +1156,9 @@ Section theorems_for_A_type.
     exists l4, l5.
     trivial.
   Qed.
+End repeat2_branching.
 
+Section du_definition.
   (*duA stands for "down-up for A-type reversed weights"
     namely starting from repeat a p ++ repeat b q with a<=b,
     decrement one entry and increment another one,
@@ -1015,49 +1168,37 @@ Section theorems_for_A_type.
     If there are not enough entries do nothing.*)
   Definition d1u1A (a b : Z) (p q : nat) :=
     match p with
-      | 0 => twovalA a b p q
-      | 1 => twovalA a b p q
+      | 0 => repeat2 a b p q
+      | 1 => repeat2 a b p q
       | S (S p'') => (a-1)%Z::(repeat a p'') ++ (a+1)%Z::(repeat b q)
     end.
   Definition d1u2A (a b : Z) (p q : nat) :=
     match p with
-      | 0 => twovalA a b p q
+      | 0 => repeat2 a b p q
       | S p' => match q with
-                  | 0 => twovalA a b p q
+                  | 0 => repeat2 a b p q
                   | S q' => (a-1)%Z::(repeat a p')
                                  ++ (repeat b q') ++ (b+1)%Z::nil
                 end
     end.
   Definition d2u1A (a b : Z) (p q : nat) :=
     match p with
-      | 0 => twovalA a b p q
+      | 0 => repeat2 a b p q
       | S p' => match q with
-                  | 0 => twovalA a b p q
+                  | 0 => repeat2 a b p q
                   | S q' => (repeat a p')
                               ++ (a+1)%Z::(b-1)%Z::(repeat b q')
                 end
     end.
   Definition d2u2A (a b : Z) (p q : nat) :=
     match q with
-      | 0 => twovalA a b p q
-      | 1 => twovalA a b p q
+      | 0 => repeat2 a b p q
+      | 1 => repeat2 a b p q
       | S (S q'') => repeat a p ++ (b-1)%Z::(repeat b q'') ++ (b+1)%Z::nil
     end.
-  Hint Rewrite
-       thm_Zvec_total_app
-       thm_Zvec_total_repeat
-       thm_Z_of_nat_S
-       Z.mul_add_distr_r
-       Z.add_assoc
-       Z.mul_1_l
-       Z.mul_1_r
-       Z.mul_0_l
-       Z.mul_0_r
-  : rewritetotal.
-  Tactic Notation "simpl_total" :=
-    repeat (simpl || autorewrite with rewritetotal).
-  Tactic Notation "simpl_total" "in" hyp(H) :=
-    repeat (simpl in H || autorewrite with rewritetotal in H).
+End du_definition.
+
+Section du_radical.
   Ltac tac_du_repeat :=
     repeat (simpl ;
             match goal with
@@ -1087,13 +1228,13 @@ Section theorems_for_A_type.
     intros a b p q ;
     autorewrite with rewritesome ;
     intros Ha Hb [Hinc Htot] ;
-    unfold fn, twovalA in * ;
+    unfold fn, repeat2 in * ;
     tac_du_repeat.
   Theorem thm_d1u1A_radical :
     forall a b p q,
       (a < 0)%Z
       -> (0 < b)%Z
-      -> lie_is_radical_revwt_type lie_A_type (twovalA a b p q) = true
+      -> lie_is_radical_revwt_type lie_A_type (repeat2 a b p q) = true
       -> lie_is_radical_revwt_type lie_A_type (d1u1A a b p q) = true.
   Proof.
     tac_du d1u1A.
@@ -1102,7 +1243,7 @@ Section theorems_for_A_type.
     forall a b p q,
       (a < 0)%Z
       -> (0 < b)%Z
-      -> lie_is_radical_revwt_type lie_A_type (twovalA a b p q) = true
+      -> lie_is_radical_revwt_type lie_A_type (repeat2 a b p q) = true
       -> lie_is_radical_revwt_type lie_A_type (d1u2A a b p q) = true.
   Proof.
     tac_du d1u2A.
@@ -1113,7 +1254,7 @@ Section theorems_for_A_type.
     forall a b p q,
       (a < 0)%Z
       -> (0 < b)%Z
-      -> lie_is_radical_revwt_type lie_A_type (twovalA a b p q) = true
+      -> lie_is_radical_revwt_type lie_A_type (repeat2 a b p q) = true
       -> lie_is_radical_revwt_type lie_A_type (d2u1A a b p q) = true.
   Proof.
     tac_du d2u1A.
@@ -1122,12 +1263,14 @@ Section theorems_for_A_type.
     forall a b p q,
       (a < 0)%Z
       -> (0 < b)%Z
-      -> lie_is_radical_revwt_type lie_A_type (twovalA a b p q) = true
+      -> lie_is_radical_revwt_type lie_A_type (repeat2 a b p q) = true
       -> lie_is_radical_revwt_type lie_A_type (d2u2A a b p q) = true.
   Proof.
     tac_du d2u2A.
   Qed.
+End du_radical.
 
+Section du_branching.
   Ltac tac_du_intro p q :=
     intros ;
     repeat try (destruct p ; [omega|]) ;
@@ -1136,17 +1279,16 @@ Section theorems_for_A_type.
       radical_branching_A_two_revwt_b,
       lie_is_radical_revwt_type,
       d1u1A, d1u2A, d2u1A, d2u2A,
-      twovalA in * ;
+      repeat2 in * ;
     autorewrite with rewritesome in * ;
     firstorder.
-
   Theorem thm_d1u1A :
     forall a b p q lambda,
       (a < 0)%Z
       -> (0 < b)%Z
       -> 1 < p
       -> 0 < q
-      -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+      -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
       -> (nth 0 lambda a < a)%Z
       -> (a < nth (1 + p) lambda a)%Z
       -> Is_known_w0_branching_A_revwt lambda (d1u1A a b p q).
@@ -1190,14 +1332,13 @@ Section theorems_for_A_type.
       + simpl_length.
         exact (eq_sym H14).
   Qed.
-
   Theorem thm_d1u2A :
     forall a b p q lambda,
       (a < 0)%Z
       -> (0 < b)%Z
       -> 0 < p
       -> 0 < q
-      -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+      -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
       -> (nth 0 lambda a < a)%Z
       -> (b < nth (1 + p + q) lambda b)%Z
       -> Is_known_w0_branching_A_revwt lambda (d1u2A a b p q).
@@ -1241,14 +1382,13 @@ Section theorems_for_A_type.
       + simpl_length ; clear -H14 ; omega.
       + simpl_length ; clear -H14 ; omega.
   Qed.
-
   Theorem thm_d2u1A :
     forall a b p q lambda,
       (a < 0)%Z
       -> (0 < b)%Z
       -> (0 < p)%nat
       -> (0 < q)%nat
-      -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+      -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
       -> (nth p lambda b < b)%Z
       -> (a < nth (1 + p) lambda a)%Z
       -> Is_known_w0_branching_A_revwt lambda (d2u1A a b p q).
@@ -1302,14 +1442,13 @@ Section theorems_for_A_type.
       + simpl_extra.
         split ; [omega|apply thm_Zvec_leb_refl].
   Qed.
-
   Theorem thm_d2u2A :
     forall a b p q lambda,
       (a < 0)%Z
       -> (0 < b)%Z
       -> (0 < p)%nat
       -> (1 < q)%nat
-      -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+      -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
       -> (nth p lambda b < b)%Z
       -> (b < nth (1 + p + q) lambda b)%Z
       -> Is_known_w0_branching_A_revwt lambda (d2u2A a b p q).
@@ -1361,80 +1500,9 @@ Section theorems_for_A_type.
         rewrite plus_n_Sm, plus_n_Sm.
         omega.
   Qed.
+End du_branching.
 
-  (*TODO: move*)
-  Theorem thm_1_lt_SS :
-    forall n, 1 < S (S n).
-  Proof.
-    intros ; firstorder.
-  Qed.
-  Theorem thm_repeat_fact2 :
-    forall A (a b : A) lambda mu p,
-      lambda ++ a::mu = repeat b p -> a = b.
-  Proof.
-    induction lambda.
-    - simpl.
-      destruct p.
-      + discriminate.
-      + simpl.
-        rewrite list_eq_iff_hd_tl.
-        firstorder.
-    - simpl.
-      destruct p.
-      + discriminate.
-      + simpl.
-        rewrite list_eq_iff_hd_tl.
-        firstorder.
-  Qed.
-  Theorem thm_repeat_fact3 :
-    forall A (b c e : A) lambda mu nu q,
-      lambda ++ b :: mu ++ c :: nu = repeat e q -> b = c.
-  Proof.
-    intros.
-    rewrite app_comm_cons in H.
-    rewrite (thm_repeat_fact2  _ _ _ _ _ _ H) in *.
-    rewrite app_assoc in H.
-    rewrite (thm_repeat_fact2  _ _ _ _ _ _ H) in *.
-    firstorder.
-  Qed.
-  Theorem thm_twoval_fact1 :
-    forall A (a b c d e : A) lambda mu nu p q,
-      a::lambda ++ b::mu ++ c::nu = repeat d p ++ repeat e q
-      -> a = b \/ b = c.
-  Proof.
-    intros.
-    destruct p as [|p].
-    - rewrite app_comm_cons in H.
-      rewrite (thm_repeat_fact3 _ _ _ _ _ _ _ _ H).
-      firstorder.
-    - simpl in H.
-      rewrite list_eq_iff_hd_tl in H.
-      destruct H as [Had H].
-      rewrite Had in *.
-      generalize p, H.
-      clear.
-      induction lambda.
-      + simpl in *.
-        intros.
-        destruct p.
-        * simpl in *.
-          rewrite <- (app_nil_l (_::_)) in H.
-          rewrite (thm_repeat_fact3 _ _ _ _ _ _ _ _ H).
-          firstorder.
-        * simpl in *.
-          rewrite list_eq_iff_hd_tl in H.
-          firstorder.
-      + destruct p.
-        * simpl in *.
-          intros.
-          rewrite app_comm_cons in H.
-          rewrite (thm_repeat_fact3 _ _ _ _ _ _ _ _ H).
-          firstorder.
-        * simpl.
-          rewrite list_eq_iff_hd_tl.
-          firstorder.
-  Qed.
-
+Section du_not_exceptional.
   Theorem thm_d1u1A_not_exceptional :
     forall a b p q g,
       lie_algebra_type g = lie_A_type
@@ -1447,13 +1515,13 @@ Section theorems_for_A_type.
     intros a b p q g Hgtype Ha Hb Hp Hq Hexc.
     destruct p as [|[|p]] ; try (clear -Hp ; omega).
     destruct q as [|q] ; try (clear -Hq ; omega).
-    destruct (thm_A_exceptional_twoval g Hgtype _ Hexc)
+    destruct (thm_A_exceptional_repeat2 g Hgtype _ Hexc)
       as [a0 [b0 [p0 [q0 [Ha0b0 H]]]]].
     clear g Hgtype Hexc.
     unfold d1u1A in H.
     simpl in H.
     rewrite <- (app_nil_l (b::_)) in H.
-    destruct (thm_twoval_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+    destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
   Qed.
   Theorem thm_d1u2A_not_exceptional :
     forall a b p q g,
@@ -1468,7 +1536,7 @@ Section theorems_for_A_type.
     intros a b p q g Hgtype Ha Hb Hp Hq Hpq Hexc.
     destruct p as [|p] ; try (clear -Hp ; omega).
     destruct q as [|q] ; try (clear -Hq ; omega).
-    destruct (thm_A_exceptional_twoval g Hgtype _ Hexc)
+    destruct (thm_A_exceptional_repeat2 g Hgtype _ Hexc)
       as [a0 [b0 [p0 [q0 [Ha0b0 H]]]]].
     clear g Hgtype Hexc.
     unfold d1u2A in H.
@@ -1477,9 +1545,9 @@ Section theorems_for_A_type.
       + firstorder.
       + simpl in H.
         rewrite <- (app_nil_l (a::_)) in H.
-        destruct (thm_twoval_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+        destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
     - simpl in H.
-      destruct (thm_twoval_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+      destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
   Qed.
   Theorem thm_d2u1A_not_exceptional_prelim :
     forall p q,
@@ -1507,14 +1575,14 @@ Section theorems_for_A_type.
     intros a b p q g Hgtype Ha Hb Hp Hq Hpq Htot Hexc.
     destruct p as [|p] ; try (clear -Hp ; omega).
     destruct q as [|q] ; try (clear -Hq ; omega).
-    destruct (thm_A_exceptional_twoval g Hgtype _ Hexc)
+    destruct (thm_A_exceptional_repeat2 g Hgtype _ Hexc)
       as [a0 [b0 [p0 [q0 [Ha0b0 H]]]]].
     clear g Hgtype Hexc.
     unfold d2u1A in H.
     destruct q ; destruct p ; simpl in H.
     - firstorder.
     - rewrite <- (app_nil_l ((b-1)%Z::_)) in H.
-      destruct (thm_twoval_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; [omega|].
+      destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; [omega|].
       assert (a = -1 /\ b = 1)%Z as [H1 H2] ; [omega|].
       rewrite H1, H2 in Htot.
       pose (H3 := thm_d2u1A_not_exceptional_prelim _ _ Htot).
@@ -1522,7 +1590,7 @@ Section theorems_for_A_type.
       omega.
     - rewrite <- (app_nil_l ((b-1)%Z::_)) in H.
       rewrite <- (app_nil_l (b%Z::_)) in H.
-      destruct (thm_twoval_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; [|omega].
+      destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; [|omega].
       assert (a = -1 /\ b = 1)%Z as [H1 H2] ; [omega|].
       rewrite H1, H2 in Htot.
       pose (H3 := thm_d2u1A_not_exceptional_prelim _ _ Htot).
@@ -1530,7 +1598,7 @@ Section theorems_for_A_type.
       omega.
     - rewrite <- (app_nil_l (b%Z::_)) in H.
       rewrite (app_comm_cons nil _ (b-1)%Z) in H.
-      destruct (thm_twoval_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+      destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
   Qed.
   Theorem thm_d2u2A_not_exceptional :
     forall a b p q g,
@@ -1544,21 +1612,16 @@ Section theorems_for_A_type.
     intros a b p q g Hgtype Ha Hb Hp Hq Hexc.
     destruct p as [|p] ; try (clear -Hp ; omega).
     destruct q as [|[|q]] ; try (clear -Hq ; omega).
-    destruct (thm_A_exceptional_twoval g Hgtype _ Hexc)
+    destruct (thm_A_exceptional_repeat2 g Hgtype _ Hexc)
       as [a0 [b0 [p0 [q0 [Ha0b0 H]]]]].
     clear g Hgtype Hexc.
     unfold d2u2A in H.
     simpl in H.
-    destruct (thm_twoval_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+    destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
   Qed.
+End du_not_exceptional.
 
-  (*TODO : use something like
-  Variable g : lie_algebra.
-  Variable HgAtype : lie_algebra_type g = lie_A_type.
-  Variable lambda : list Z.
-  Variable Hrad : lie_is_radical_revwt_alg g lambda = true.
-  *)
-
+Section du_main.
   Theorem thm_duA :
     forall g h,
       lie_algebra_type g = lie_A_type
@@ -1572,7 +1635,7 @@ Section theorems_for_A_type.
                 -> 0 < q
                 -> 1 < p \/ 1 < q
                 -> (Z.of_nat q * b = - (Z.of_nat p * a))%Z
-                -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+                -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
                 -> (exists mu,
                       Is_known_w0_branching_A_revwt lambda mu
                       /\ ~ (Is_exceptional_revwt_alg h mu))
@@ -1590,7 +1653,7 @@ Section theorems_for_A_type.
     pose (H12notexc := thm_d1u2A_not_exceptional a b p q h Hhtype Ha Hb Hp Hq Hpq).
     pose (H21notexc := thm_d2u1A_not_exceptional a b p q h Hhtype Ha Hb Hp Hq Hpq Htot).
     pose (H22notexc := thm_d2u2A_not_exceptional a b p q h Hhtype Ha Hb Hp).
-    destruct (thm_twovalA_nthc a b p q lambda Ha Hb Hp Hq Hpq Hbranch)
+    destruct (thm_repeat2_nthc a b p q lambda Ha Hb Hp Hq Hpq Hbranch)
       as [Hn0 [Hn1 [Hn2 Hn3]]].
     clearbody H11 H12 H21 H22 H11notexc H12notexc H21notexc H22notexc.
     destruct p as [|p] ; try (clear -Hp ; omega).
@@ -1619,216 +1682,13 @@ Section theorems_for_A_type.
                                    (H22 (thm_1_lt_SS q) Hn2lt Hn3lt)
                                    (H22notexc (thm_1_lt_SS q))))).
   Qed.
-
-  (*TODO in thm_Zvec_leb_total replace Zvec_short_map_zip by hdn*)
-
-  (*TODO: move*)
-  Theorem thm_Zvec_nondecb_hd_leb:
-    forall lambda a,
-      Zvec_nondecb lambda = true
-      -> (a <= hd a lambda)%Z
-      -> Zvec_short_allb Z.leb (repeat a (length lambda)) lambda = true.
-  Proof.
-    induction lambda.
-    - simpl ; firstorder.
-    - intros.
-      simpl_extra.
-      simpl in H0.
-      firstorder.
-      refine (IHlambda a0 (thm_Zvec_nondecb_cons _ _ H) _).
-      destruct lambda ; simpl ;
-      [|unfold Zvec_nondecb in H ; simpl_destruct H as [H _]] ;
-      omega.
-  Qed.
-  Theorem thm_Zvec_nondecb_last_leb :
-    forall lambda a,
-      Zvec_nondecb (lambda ++ a::nil) = true
-      -> Zvec_short_allb Z.leb (lambda ++ a::nil)
-                         (repeat a (1 + length lambda)) = true.
-  Proof.
-    intros lambda a H.
-    assert (Zvec_allb (Z.geb a) lambda = true) as H0.
-    {
-      induction lambda.
-      - trivial.
-      - simpl in *.
-        simpl_extra.
-        split.
-        + rewrite Z.geb_le.
-          exact (thm_Zvec_nondecb_app_hd _ _ _ _ H).
-        + exact (IHlambda (thm_Zvec_nondecb_cons _ _ H)).
-    }
-    rewrite plus_comm, thm_repeat_plus.
-    simpl.
-    rewrite thm_Zvec_leb_app.
-    split.
-    - induction lambda.
-      + trivial.
-      + simpl_extra.
-        simpl_extra in H0.
-        rewrite Z.geb_le in H0.
-        pose (H2 := IHlambda (thm_Zvec_nondecb_cons _ _ H)).
-        firstorder.
-    - exact (thm_Zvec_leb_refl _).
-    - tac_length.
-  Qed.
-  Theorem thm_Zvec_nondecb_last_leb2 :
-    forall a lambda,
-      last lambda a = a
-      -> Zvec_nondecb lambda = true
-      -> Zvec_short_allb Z.leb lambda
-                         (repeat a (length lambda)) = true.
-  Proof.
-    intros a lambda.
-    destruct (list_eq_dec Z.eq_dec lambda nil) as [H|H].
-    - rewrite H in * ; simpl ; trivial.
-    - pose (H0 := app_removelast_last a H).
-      intros H1 H2.
-      rewrite H1 in *.
-      rewrite H0 in H2.
-      pose (H3 := thm_Zvec_nondecb_last_leb _ _ H2).
-      rewrite <- H0 in H3.
-      assert (1 + length (removelast lambda) = length lambda) as H4.
-      {
-        simpl_length.
-        destruct lambda ; simpl.
-        - contradiction (H (eq_refl _)).
-        - omega.
-      }
-      rewrite H4 in H3.
-      exact H3.
-  Qed.
-
-  Theorem thm_hdn_long :
-    forall A p (lambda : list A),
-      length lambda < p -> hdn p lambda = lambda.
-  Proof.
-    induction p.
-    - firstorder.
-      contradiction (Nat.nlt_0_r _ H).
-    - destruct lambda ; simpl.
-      + trivial.
-      + simpl_extra.
-        firstorder.
-  Qed.
-  Theorem thm_tln_long :
-    forall A p (lambda : list A),
-      length lambda < p -> tln p lambda = nil.
-  Proof.
-    induction p.
-    - firstorder.
-      contradiction (Nat.nlt_0_r _ H).
-    - destruct lambda ; simpl.
-      + trivial.
-      + simpl_extra.
-        firstorder.
-  Qed.
-  Theorem thm_Zvec_nondecb_hdn :
-    forall p lambda,
-      Zvec_nondecb lambda = true
-      -> Zvec_nondecb (hdn p lambda) = true.
-  Proof.
-    intros.
-    destruct (le_lt_dec p (length lambda)) as [H0|H0].
-    - rewrite (thm_hdn_tln _ _ _ H0) in H.
-      pose (H1 := thm_Zvec_nondecb_app _ _ H).
-      tauto.
-    - rewrite (thm_hdn_long _ _ _ H0).
-      trivial.
-  Qed.
-  Theorem thm_Zvec_nondecb_tln :
-    forall p lambda,
-      Zvec_nondecb lambda = true
-      -> Zvec_nondecb (tln p lambda) = true.
-  Proof.
-    intros.
-    destruct (le_lt_dec p (length lambda)) as [H0|H0].
-    - rewrite (thm_hdn_tln _ _ _ H0) in H.
-      pose (H1 := thm_Zvec_nondecb_app _ _ H).
-      tauto.
-    - rewrite (thm_tln_long _ _ _ H0).
-      trivial.
-  Qed.
-  Theorem thm_hd_hdn :
-    forall A (a : A) p lambda,
-      hd a (hdn p lambda) = if p =? 0 then a else hd a lambda.
-  Proof.
-    destruct p ; [|destruct lambda] ; simpl ; firstorder.
-  Qed.
-  Theorem thm_hd_tln_nth :
-    forall A (a : A) p lambda,
-      hd a (tln p lambda) = nth p lambda a.
-  Proof.
-    induction p ; destruct lambda ; firstorder.
-  Qed.
-  Theorem thm_nth_0_hd :
-    forall A (a : A) lambda,
-      nth 0 lambda a = hd a lambda.
-  Proof.
-    destruct lambda ; simpl ; firstorder.
-  Qed.
-  Theorem thm_Zvec_leb_total_same_length :
-    forall mu lambda,
-      length mu = length lambda
-      -> Zvec_short_allb Z.leb lambda mu = true
-      -> (Zvec_total lambda <= Zvec_total mu)%Z.
-  Proof.
-    induction mu.
-    - destruct lambda.
-      + omega.
-      + discriminate.
-    - destruct lambda.
-      + discriminate.
-      + simpl_extra.
-        intros H [H0 H1].
-        pose (H2 := IHmu lambda H H1).
-        omega.
-  Qed.
-  (*TODO: move; actually unused*)
-  Theorem thm_nth_hdn :
-    forall A (a : A) p q lambda,
-      p < q -> nth p (hdn q lambda) a
-               = nth p lambda a.
-  Proof.
-    induction p.
-    - destruct q.
-      + intros ; omega.
-      + destruct lambda ; simpl ; trivial.
-    - destruct q.
-      + intros ; omega.
-      + intros.
-        destruct lambda ; simpl ; trivial.
-        rewrite lt_S_n_iff in H.
-        exact (IHp q lambda H).
-  Qed.
-  Theorem thm_nth_last :
-    forall A (a : A) lambda,
-      nth (length lambda - 1) lambda a = last lambda a.
-  Proof.
-    intros.
-    induction lambda.
-    - trivial.
-    - simpl.
-      destruct lambda.
-      + simpl ; trivial.
-      + simpl.
-        simpl in IHlambda.
-        rewrite Nat.sub_0_r in IHlambda.
-        assumption.
-  Qed.
-  Theorem thm_S_minus_1 :
-    forall n, S n - 1 = n.
-  Proof.
-    intros ; omega.
-  Qed.
-
   Theorem thm_A_impossible_total:
     forall a b p q lambda,
       (a < 0)%Z
       -> (0 < b)%Z
       -> 0 < p
       -> 0 < q
-      -> Is_known_w0_branching_A_revwt lambda (twovalA a b p q)
+      -> Is_known_w0_branching_A_revwt lambda (repeat2 a b p q)
       -> (nth 0 lambda a = a /\ nth p lambda b = b)
          \/ (a = nth (1 + p) lambda a /\ b = nth (1 + p + q) lambda b)
       -> False.
@@ -1838,12 +1698,12 @@ Section theorems_for_A_type.
     autorewrite with rewritesome in Hbranch.
     destruct Hbranch as [[[[Hlength [Hincl Htotl]] [_ Htotm]] _] _].
     intros [[H0 H1]|[H0 H1]].
-    - assert (Zvec_short_allb Z.leb (twovalA a b p (2 + q)) lambda = true) as H.
+    - assert (Zvec_short_allb Z.leb (repeat2 a b p (2 + q)) lambda = true) as H.
       {
-        unfold twovalA in *.
+        unfold repeat2 in *.
         assert (p <= length lambda) as Hlenp.
         { clear -Hlength. simpl_length in Hlength. omega. }
-        pose (Hlsplit := thm_hdn_tln _ _ _ Hlenp).
+        pose (Hlsplit := thm_hdn_tln _ p lambda).
         rewrite Hlsplit, thm_Zvec_leb_app.
         split.
         + assert (length (hdn p lambda) = p) as Htmplen.
@@ -1863,20 +1723,20 @@ Section theorems_for_A_type.
         + simpl_length.
           exact (eq_sym (min_l _ _ Hlenp)).
       }
-      assert (length lambda = length (twovalA a b p (2 + q))) as Hlen2.
+      assert (length lambda = length (repeat2 a b p (2 + q))) as Hlen2.
       {
-        unfold twovalA in *.
+        unfold repeat2 in *.
         simpl_length in Hlength.
         tac_length.
       }
       pose (H2 := thm_Zvec_leb_total_same_length _ _ Hlen2 H).
       rewrite Htotl in H2.
-      unfold twovalA in H2, Htotm.
+      unfold repeat2 in H2, Htotm.
       simpl_total in H2.
       simpl_total in Htotm.
       clear - Ha Hb H2 Htotm.
       omega.
-    - unfold twovalA in *.
+    - unfold repeat2 in *.
       simpl_length in Hlength.
       assert (2 + p <= length lambda) as Hlength2.
       { omega. }
@@ -1884,7 +1744,7 @@ Section theorems_for_A_type.
       { autorewrite with rewritelength ; exact (min_l _ _ Hlength2). }
       assert (length (tln (2 + p) lambda) = q) as Hlength4.
       { autorewrite with rewritelength ; omega. }
-      pose (Hlambdaval := thm_hdn_tln _ _ _ Hlength2).
+      pose (Hlambdaval := thm_hdn_tln _ (2 + p) lambda).
       rewrite Hlambdaval in H0, H1, Hincl.
       rewrite app_nth1 in H0.
       rewrite app_nth2 in H1.
@@ -1925,47 +1785,9 @@ Section theorems_for_A_type.
       clear -Htotm Ha H5.
       omega.
   Qed.
+End du_main.
 
-  (*TODO: move*)
-  Theorem thm_Zvec_eqb_eq :
-    forall lambda mu,
-      length lambda = length mu
-      -> Zvec_short_allb Z.eqb lambda mu = true
-         <-> lambda = mu.
-  Proof.
-    induction lambda.
-    - destruct mu ; simpl.
-      + tauto.
-      + discriminate.
-    - destruct mu ; simpl.
-      + discriminate.
-      + simpl_extra.
-        firstorder.
-  Qed.
-  Theorem thm_Zvec_short_map_zip_same_length :
-    forall lambda mu,
-      length lambda = length mu
-      -> Zvec_short_map_zip (fun _ a : Z => a) mu lambda = lambda.
-  Proof.
-    induction lambda ; destruct mu ; try tauto ; try discriminate.
-    simpl_extra.
-    firstorder.
-  Qed.
-  Theorem thm_Zvec_leb_eq_tot :
-    forall lambda mu : list Z,
-      length lambda = length mu
-      -> Zvec_short_allb Z.leb lambda mu = true
-      -> Zvec_total lambda = Zvec_total mu <-> lambda = mu.
-  Proof.
-    intros lambda mu Hlength Hleb.
-    assert (length mu <= length lambda) as Hlength2.
-    { omega. }
-    pose (H := thm_Zvec_leb_eqb_tot lambda mu Hlength2 Hleb).
-    rewrite (thm_Zvec_short_map_zip_same_length _ _ Hlength) in H.
-    rewrite Z.eq_sym_iff, <- H.
-    exact (thm_Zvec_eqb_eq lambda mu Hlength).
-  Qed.
-
+Section du_zero.
   Theorem thm_A_m101_branch :
     forall n lambda,
       Is_known_w0_branching_A_revwt lambda (repeat 0%Z (3 + n))
@@ -2082,215 +1904,18 @@ Section theorems_for_A_type.
     - intros Hnuexc.
       assert (lie_algebra_type h = lie_A_type) as Hhtype.
       { trivial. }
-      destruct (thm_A_exceptional_twoval h Hhtype nu Hnuexc)
+      destruct (thm_A_exceptional_repeat2 h Hhtype nu Hnuexc)
         as [a [b [p [q [Hab Hnu]]]]].
       unfold nu in Hnu.
       simpl in Hnu.
       rewrite <- (app_nil_l (0%Z::_)) in Hnu.
-      pose (H := thm_twoval_fact1 _ _ _ _ _ _ _ _ _ _ _ Hnu).
+      pose (H := thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ Hnu).
       clear -H.
       omega.
   Qed.
-  (*TODO: move*)
-  Theorem thm_Zvec_nondecb_hd_last_eq :
-    forall lambda a,
-      Zvec_nondecb lambda = true
-      -> hd a lambda = a
-      -> a = last lambda a
-      -> lambda = repeat a (length lambda).
-  Proof.
-    intros lambda z.
-    induction lambda.
-    - trivial.
-    - intros Hinc Hhd Hlast.
-      simpl in Hhd.
-      rewrite <- Hhd in *.
-      pose (Hinc2 := thm_Zvec_nondecb_cons _ _ Hinc).
-      destruct lambda as [|b [|c lambda]].
-      + simpl in * ; trivial.
-      + simpl in * ; rewrite Hlast ; trivial.
-      + assert (b::c::lambda <> nil) as H2; [discriminate|].
-        rewrite (app_removelast_last a H2) in Hinc2.
-        simpl in Hlast, Hinc2.
-        rewrite <- Hlast in Hinc2.
-        pose (Hba := thm_Zvec_nondecb_app_hd _ _ _ _ Hinc2).
-        pose (Hab := thm_Zvec_nondecb_01_geq _ _ _ Hinc).
-        assert (b = a) as Haeqb.
-        { clear - Hab Hba ; omega. }
-        simpl repeat.
-        rewrite list_eq_iff_hd_tl.
-        simpl repeat in IHlambda.
-        firstorder.
-        refine (IHlambda (thm_Zvec_nondecb_cons _ _ Hinc) _ _).
-        * assumption.
-        * assumption.
-  Qed.
-  Theorem thm_last_hdn :
-    forall A (a : A) p lambda,
-      p <= length lambda
-      -> last (hdn p lambda) a = if p =? 0 then a else nth (p - 1) lambda a.
-  Proof.
-    induction p.
-    - trivial.
-    - destruct lambda.
-      + simpl. omega.
-      + simpl.
-        intros.
-        pose (H1 := IHp _ (le_S_n _ _ H)).
-        rewrite H1.
-        destruct lambda.
-        * destruct p ; simpl in *; trivial ; omega.
-        * destruct p ; trivial.
-          rewrite Nat.sub_0_r, thm_S_minus_1 in *.
-          simpl.
-          trivial.
-  Qed.
-  (*Todo: rename thm_Zvec_leb_leb_eq to thm_Zvec_leb_irrefl*)
+End du_zero.
 
-  Theorem thm_A_case1_is_exceptional :
-    forall g lambda a,
-      lie_algebra_type g = lie_A_type
-      -> lie_is_radical_revwt_type lie_A_type lambda = true
-      -> length lambda = lie_embedding_dim g
-      -> (a < 0)%Z
-      -> nth 0 lambda a = a
-      -> a = nth (length lambda - 2) lambda a
-      -> Is_exceptional_revwt_alg g lambda.
-  Proof.
-    intros g lambda a Hgtype Hrad Hlength Ha Hnth0 Hnth1.
-    destruct g as [[n Hn]| | | | | | | | ] ;
-      try (simpl in Hgtype; discriminate Hgtype).
-    unfold lie_is_radical_revwt_type in Hrad.
-    simpl_destruct Hrad as [Hinc Htot].
-    simpl in Hlength.
-    exists 1, (-a)%Z.
-    unfold is_exceptional_multiplier, lie_radical_fundamental_revwt_alg.
-    unfold lie_rank, lie_embedding_dim, plus.
-    assert (((1 =? 0) || (n <? 1)) = false) as H0.
-    { simpl. rewrite Nat.ltb_nlt. omega. }
-    rewrite H0.
-    split.
-    + clear - Ha Hn.
-      assert (~(-a < 0)%Z) as Ha1 ; [omega|].
-      assert (~(-a = 0)%Z) as Ha2 ; [omega|].
-      rewrite <- Z.ltb_nlt in Ha1.
-      rewrite <- Z.eqb_neq in Ha2.
-      rewrite Ha1, Ha2.
-      rewrite orb_true_r, orb_true_l.
-      trivial.
-    + rewrite <- thm_Z_of_nat_S.
-      set (t := Z.gcd _ _) in * ; compute in t ; unfold t in * ; clear t.
-      rewrite Zdiv_1_r, Zdiv_1_r, thm_S_minus_1.
-      unfold Zvec_mul.
-      rewrite map_app, thm_repeat_map.
-      rewrite Z.mul_opp_comm.
-      set (t := (- - Z.of_nat 1)%Z) in * ; compute in t ; unfold t in * ; clear t.
-      rewrite Z.mul_1_r.
-      unfold repeat at 2, map.
-      assert (n <= length lambda) as Hlength2.
-      { clear - Hlength. omega. }
-      assert (hdn n lambda = repeat a n) as Hhd.
-      {
-        assert (hd a (hdn n lambda) = a) as Hhdnhd.
-        {
-          rewrite thm_hd_hdn, <- thm_nth_0_hd.
-          destruct n ; [clear -Hn ; omega|assumption].
-        }
-        assert (a = last (hdn n lambda) a) as Hhdnlast.
-        {
-          rewrite Hlength, Nat.sub_succ in Hnth1.
-          rewrite thm_last_hdn ; [|assumption].
-          destruct n ; [trivial|assumption].
-        }
-        rewrite (thm_Zvec_nondecb_hd_last_eq
-                   _ _ (thm_Zvec_nondecb_hdn n lambda Hinc) Hhdnhd Hhdnlast).
-        simpl_length.
-        rewrite (min_l _ _ Hlength2).
-        trivial.
-      }
-      pose (Hlambdaval := thm_hdn_tln _ _ _ Hlength2).
-      rewrite Hhd in Hlambdaval.
-      assert (length (tln n lambda) = 1) as Hlength3.
-      { simpl_length. omega. }
-      destruct (tln n lambda) as [|x [|]] ;
-        try (clear -Hlength3 ; simpl in *; omega).
-      simpl in *.
-      assert (x = -a * Z.of_nat n)%Z as Hx.
-      {
-        rewrite Hlambdaval in Htot.
-        simpl_total in Htot.
-        clear -Htot.
-        rewrite <- Zopp_mult_distr_l, Z.mul_comm.
-        omega.
-      }
-      rewrite <- Hx, <- Hlambdaval.
-      trivial.
-  Qed.
-
-  Theorem thm_A_case2_is_exceptional :
-    forall g lambda b,
-      lie_algebra_type g = lie_A_type
-      -> lie_is_radical_revwt_type lie_A_type lambda = true
-      -> length lambda = lie_embedding_dim g
-      -> (0 < b)%Z
-      -> nth 1 lambda b = b
-      -> b = nth (length lambda - 1) lambda b
-      -> Is_exceptional_revwt_alg g lambda.
-  Proof.
-    intros g lambda b Hgtype Hrad Hlength Hb Hnth0 Hnth1.
-    destruct g as [[n Hn]| | | | | | | | ] ;
-      try (simpl in Hgtype; discriminate Hgtype).
-    unfold lie_is_radical_revwt_type in Hrad.
-    simpl_destruct Hrad as [Hinc Htot].
-    simpl in Hlength.
-    exists n, b.
-    unfold is_exceptional_multiplier, lie_radical_fundamental_revwt_alg.
-    unfold lie_rank, lie_embedding_dim, plus.
-    assert (((n =? 0) || (n <? n)) = false) as H0.
-    {
-      rewrite (Nat.ltb_irrefl n).
-      destruct n ; firstorder ; omega.
-    }
-    rewrite H0.
-    split.
-    + clear - Hb Hn.
-      assert (~(b < 0)%Z) as Ha1 ; [omega|].
-      assert (~(b = 0)%Z) as Ha2 ; [omega|].
-      rewrite <- Z.ltb_nlt in Ha1.
-      rewrite <- Z.eqb_neq in Ha2.
-      rewrite Ha1, Ha2, (Nat.eqb_refl n), orb_true_r.
-      trivial.
-    + rewrite Z.gcd_add_diag_r, Z.gcd_1_r, Z.div_1_r, Z.div_1_r.
-      assert (S n - n = 1) as H1.
-      { omega. }
-      rewrite H1.
-      simpl.
-      unfold Zvec_mul.
-      rewrite thm_repeat_map, Z.mul_1_r.
-      rewrite thm_nth_last in Hnth1.
-      destruct lambda as [|x lambda] ; [clear -Hlength ; simpl in * ; omega |].
-      simpl_extra.
-      simpl_extra in Hlength.
-      assert (lambda = repeat b n) as Hval.
-      {
-        rewrite <- Hlength.
-        refine (thm_Zvec_nondecb_hd_last_eq _ _ _ _ _).
-        - exact (thm_Zvec_nondecb_cons _ _ Hinc).
-        - simpl in Hnth0.
-          rewrite thm_nth_0_hd in Hnth0.
-          assumption.
-        - destruct lambda.
-          + trivial.
-          + simpl in *.
-            assumption.
-      }
-      firstorder.
-      rewrite Hval in Htot.
-      simpl_total in Htot.
-      rewrite Z.mul_comm, <- Zopp_mult_distr_l.
-      omega.
-  Qed.
-
+Section main.
   Theorem thm_main_A :
     forall g,
       lie_algebra_type g = lie_A_type
@@ -2433,7 +2058,7 @@ Section theorems_for_A_type.
                 omega.
               }
               rewrite Hlength3 in Hnth1.
-              exact (thm_A_case1_is_exceptional
+              exact (thm_A_exceptional_from_bounds1
                        g lambda a Hgtype Hrad Hlength Ha Hnth0 Hnth1).
             - left.
               destruct H as [H1p [Hnth0 Hnth1]].
@@ -2446,7 +2071,7 @@ Section theorems_for_A_type.
                 omega.
               }
               rewrite Hlength3 in Hnth1.
-              exact (thm_A_case2_is_exceptional
+              exact (thm_A_exceptional_from_bounds2
                        g lambda b Hgtype Hrad Hlength Hb Hnth0 Hnth1).
           }
         * assert (Is_known_w0_branching_revwt_alg g lambda h mu) as Hkb2.
@@ -2455,5 +2080,5 @@ Section theorems_for_A_type.
             repeat split ; assumption.
           }
           exact (or_intror (mixed_by_induction g lambda h mu (conj Hmumix Hkb2))).
-Qed.
-End theorems_for_A_type.
+  Qed.
+End main.

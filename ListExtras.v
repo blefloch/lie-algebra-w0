@@ -20,18 +20,28 @@ Section hdn_tln.
                   | a::l' => (tln n' l')
                 end
     end.
+  Theorem thm_hdn_id :
+    forall A (lambda : list A) p,
+      length lambda <= p
+      -> hdn p lambda = lambda.
+  Proof.
+    induction lambda.
+    - destruct p ; simpl ; tauto.
+    - destruct p ; simpl ; firstorder.
+      rewrite IHlambda ; trivial.
+      refine (le_S_n _ _ _).
+      assumption.
+  Qed.
   Theorem thm_hdn_tln :
-    forall A n (l : list A), n <= length l -> l = (hdn n l) ++ (tln n l).
+    forall A n (l : list A), l = (hdn n l) ++ (tln n l).
   Proof.
     induction n.
     - simpl ; trivial.
     - destruct l as [|a l].
       + simpl ; trivial.
       + simpl.
-        intros.
         rewrite <- IHn.
-        * trivial.
-        * omega.
+        trivial.
   Qed.
 End hdn_tln.
 
@@ -194,6 +204,170 @@ Section list_helpers.
     trivial.
   Qed.
 End list_helpers.
+
+Definition repeat2 (a b : Z) (p q : nat) :=
+  repeat a p ++ repeat b q.
+
+Theorem thm_hdn_long :
+  forall A p (lambda : list A),
+    length lambda < p -> hdn p lambda = lambda.
+Proof.
+  induction p.
+  - firstorder.
+    contradiction (Nat.nlt_0_r _ H).
+  - destruct lambda ; simpl.
+    + trivial.
+    + intros H.
+      rewrite (IHp _ (lt_S_n _ _ H)).
+      trivial.
+Qed.
+Theorem thm_tln_long :
+  forall A p (lambda : list A),
+    length lambda < p -> tln p lambda = nil.
+Proof.
+  induction p.
+  - firstorder.
+    contradiction (Nat.nlt_0_r _ H).
+  - destruct lambda ; simpl.
+    + trivial.
+    + intros H.
+      rewrite (IHp _ (lt_S_n _ _ H)).
+      trivial.
+Qed.
+Theorem thm_hd_hdn :
+  forall A (a : A) p lambda,
+    hd a (hdn p lambda) = if p =? 0 then a else hd a lambda.
+Proof.
+  destruct p ; [|destruct lambda] ; simpl ; firstorder.
+Qed.
+Theorem thm_hd_tln_nth :
+  forall A (a : A) p lambda,
+    hd a (tln p lambda) = nth p lambda a.
+Proof.
+  induction p ; destruct lambda ; firstorder.
+Qed.
+Theorem thm_nth_0_hd :
+  forall A (a : A) lambda,
+    nth 0 lambda a = hd a lambda.
+Proof.
+  destruct lambda ; simpl ; firstorder.
+Qed.
+Theorem thm_nth_hdn :
+  forall A (a : A) p q lambda,
+    p < q -> nth p (hdn q lambda) a
+             = nth p lambda a.
+Proof.
+  induction p.
+  - destruct q.
+    + intros ; omega.
+    + destruct lambda ; simpl ; trivial.
+  - destruct q.
+    + intros ; omega.
+    + intros.
+      destruct lambda ; simpl ; trivial.
+      exact (IHp _ _ (lt_S_n _ _ H)).
+Qed.
+Theorem thm_nth_last :
+  forall A (a : A) lambda,
+    nth (length lambda - 1) lambda a = last lambda a.
+Proof.
+  intros.
+  induction lambda.
+  - trivial.
+  - simpl.
+    destruct lambda.
+    + simpl ; trivial.
+    + simpl.
+      simpl in IHlambda.
+      rewrite Nat.sub_0_r in IHlambda.
+      assumption.
+Qed.
+Theorem thm_last_hdn :
+  forall A (a : A) p lambda,
+    p <= length lambda
+    -> last (hdn p lambda) a = if p =? 0 then a else nth (p - 1) lambda a.
+Proof.
+  induction p.
+  - trivial.
+  - destruct lambda.
+    + simpl. omega.
+    + simpl.
+      intros.
+      pose (H1 := IHp _ (le_S_n _ _ H)).
+      rewrite H1.
+      destruct lambda.
+      * destruct p ; simpl in *; trivial ; omega.
+      * destruct p ; trivial.
+        rewrite Nat.sub_0_r in *.
+        destruct p ; simpl ; trivial.
+Qed.
+
+Theorem thm_repeat_fact2 :
+  forall A (a b : A) lambda mu p,
+    lambda ++ a::mu = repeat b p -> a = b.
+Proof.
+  induction lambda.
+  - simpl.
+    destruct p.
+    + discriminate.
+    + simpl.
+      rewrite list_eq_iff_hd_tl.
+      firstorder.
+  - simpl.
+    destruct p.
+    + discriminate.
+    + simpl.
+      rewrite list_eq_iff_hd_tl.
+      firstorder.
+Qed.
+Theorem thm_repeat_fact3 :
+  forall A (b c e : A) lambda mu nu q,
+    lambda ++ b :: mu ++ c :: nu = repeat e q -> b = c.
+Proof.
+  intros.
+  rewrite app_comm_cons in H.
+  rewrite (thm_repeat_fact2  _ _ _ _ _ _ H) in *.
+  rewrite app_assoc in H.
+  rewrite (thm_repeat_fact2  _ _ _ _ _ _ H) in *.
+  firstorder.
+Qed.
+Theorem thm_repeat2_fact1 :
+  forall A (a b c d e : A) lambda mu nu p q,
+    a::lambda ++ b::mu ++ c::nu = repeat d p ++ repeat e q
+    -> a = b \/ b = c.
+Proof.
+  intros.
+  destruct p as [|p].
+  - rewrite app_comm_cons in H.
+    rewrite (thm_repeat_fact3 _ _ _ _ _ _ _ _ H).
+    firstorder.
+  - simpl in H.
+    rewrite list_eq_iff_hd_tl in H.
+    destruct H as [Had H].
+    rewrite Had in *.
+    generalize p, H.
+    clear.
+    induction lambda.
+    + simpl in *.
+      intros.
+      destruct p.
+      * simpl in *.
+        rewrite <- (app_nil_l (_::_)) in H.
+        rewrite (thm_repeat_fact3 _ _ _ _ _ _ _ _ H).
+        firstorder.
+      * simpl in *.
+        rewrite list_eq_iff_hd_tl in H.
+        firstorder.
+    + destruct p.
+      * simpl in *.
+        intros.
+        rewrite app_comm_cons in H.
+        rewrite (thm_repeat_fact3 _ _ _ _ _ _ _ _ H).
+        firstorder.
+      * simpl.
+        rewrite list_eq_iff_hd_tl.
+        firstorder.
+Qed.
 
 Section rewrite_length.
   Variable A : Type.

@@ -7,6 +7,30 @@ Require Import Nat.
 Require Import ListExtras.
 Open Scope nat_scope.
 
+Section helpers.
+  Definition nat_ind2
+             (P : nat -> Prop)
+             (f0 : P 0) (f1 : P 1)
+             (fn : forall (n : nat), P n -> P (S (S n))) :=
+    fix F (n : nat) : P n :=
+    match n as n0 return (P n0) with
+      | 0 => f0
+      | 1 => f1
+      | S (S n0) => fn n0 (F n0)
+    end.
+End helpers.
+
+Theorem thm_1_lt_SS :
+  forall n, 1 < S (S n).
+Proof.
+  intros ; firstorder.
+Qed.
+Theorem thm_S_minus_1 :
+  forall n, S n - 1 = n.
+Proof.
+  intros ; omega.
+Qed.
+
 Section rewrite_helpers.
   Definition Zleb_iff n m : (n <=? m)%Z = true <-> (n <= m)%Z :=
     conj (Zle_bool_imp_le n m) (Zle_imp_le_bool n m).
