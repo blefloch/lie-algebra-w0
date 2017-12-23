@@ -19,4 +19,15 @@ number of λ we compute by hand that they are mixed.  Starting from this
 seed data, the Coq code being developped in this repository performs the
 case-by-case analysis proving that all other radical weights are mixed.
 
+To compile, run
+
+   coqc ListExtras.v Tools.v Zvec.v SimpleLieAlgebras.v Data.v TypeAll.v TypeA.v TypeBD.v TypeC.v TypeEFG.v Main.v
+
+- `ListExtras.v`, `Tools.v` and `Zvec.v` prove various easy theorems and provide some Ltac tactics.
+- `SimpleLieAlgebras.v` lists fundamental weights and multipliers of all simple Lie algebras.
+- `Data.v` lists the representations shown by other means to be exceptional or mixed.  It also defines branching rules that preserve w0 and radicality.
+- `TypeAll.v` proves theorems used for all Lie algebra types.
+- `TypeA.v` (done!), `TypeBD.v`, `TypeC.v`, `TypeEFG.v` prove the main theorem in the eponymous cases.
+- `Main.v` states and proves the main theorem by trivially combining the cases.
+
 Bruno Le Floch (Princeton University) and Ilia Smilga (Yale University)

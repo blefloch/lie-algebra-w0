@@ -1,7 +1,3 @@
-(* To compile, do
-
-   coqc ListExtras.v Tools.v Zvec.v SimpleLieAlgebras.v Data.v TypeAll.v TypeA.v TypeBD.v TypeC.v TypeEFG.v Main.v
-*)
 Require Import SimpleLieAlgebras.
 Require Import Data.
 Require TypeA.
