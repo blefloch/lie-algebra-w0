@@ -18,7 +18,6 @@ Open Scope nat_scope.
     Variable HgAtype : lie_algebra_type g = lie_A_type.
     Variable lambda : list Z.
     Variable Hrad : lie_is_radical_revwt_alg g lambda = true.
-  - Delete unused "mrev" section here and in Zvec.v.
 *)
 
 Ltac tac_nth_split m lambda a l1 l2 H3 H5 H12 H13 H14 :=
@@ -542,39 +541,6 @@ Section branchof.
         * exact (thm_A_pred_leb _ _).
   Qed.
 End branchof.
-
-Section mrev.
-  Theorem thm_A_radical_mrev :
-    forall lambda,
-      lie_is_radical_revwt_type lie_A_type lambda = true
-      -> lie_is_radical_revwt_type
-           lie_A_type (rev (map Z.opp lambda)) = true.
-  Proof.
-    unfold lie_is_radical_revwt_type.
-    intros lambda.
-    autorewrite with rewritesome.
-    firstorder.
-    - apply thm_Zvec_nondecb_mrev. assumption.
-    - rewrite thm_Zvec_total_mrev. omega.
-  Qed.
-  Theorem thm_An_branching_fact2 :
-    forall lambda mu,
-      Is_known_w0_branching_A_revwt lambda mu
-      -> Is_known_w0_branching_A_revwt
-           (rev (map (Z.opp) lambda))
-           (rev (map (Z.opp) mu)).
-  Proof.
-    unfold Is_known_w0_branching_A_revwt, radical_branching_A_two_revwt_b.
-    intros lambda mu.
-    autorewrite with rewritesome.
-    firstorder.
-    - tac_length.
-    - apply thm_A_radical_mrev. assumption.
-    - apply thm_A_radical_mrev. assumption.
-    - apply thm_Zvec_leb_mrev1. assumption. assumption.
-    - apply thm_Zvec_leb_mrev2. assumption. assumption.
-  Qed.
-End mrev.
 
 Section exceptional_structure.
   Theorem thm_A_zero_exceptional :
