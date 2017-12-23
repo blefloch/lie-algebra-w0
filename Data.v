@@ -105,12 +105,6 @@ Section branching.
       known_radical_branching_B_one_revwt_b lambda mu = true
       /\ known_radical_branching_B_one_revwt_b mu nu = true.
   (*TODO: add more known branchings that preserve w0*)
-  (*w0 of E8 coincides with w0 of D8*)
-  (*Partial criterion for branching from E8 to D8.*)
-  Definition Is_known_w0_branching_E8_D8_revwt (lambda mu : list Z) :=
-    (lambda = mu)
-      /\ lie_is_radical_revwt_type lie_E8_type lambda = true
-      /\ lie_is_radical_revwt_type lie_D_type mu = true.
   (*Put together all known branchings preserving w0.*)
   (*No need to check ranks of g and h as it is done by the Is_known_... functions.*)
   Definition Is_known_w0_branching_revwt_alg g lambda h mu :=
@@ -119,7 +113,6 @@ Section branching.
     /\ match lie_algebra_type g, lie_algebra_type h with
          | lie_A_type, lie_A_type => Is_known_w0_branching_A_revwt lambda mu
          | lie_B_type, lie_B_type => Is_known_w0_branching_B_revwt lambda mu
-         | lie_E8_type, lie_D8_type => Is_known_w0_branching_E8_D8_revwt lambda mu
          | _, _ => False
        end.
 End branching.
