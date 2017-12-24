@@ -12,94 +12,7 @@ Require Import Data.
 Require Import TypeAll.
 Open Scope nat_scope.
 
-(*TODO: move*)
-Theorem thm_Z_even_pos :
-  forall a, Z.even a = true -> (0 < a)%Z -> (2 <= a)%Z.
-Proof.
-  intros a Heven.
-  assert (1 <= a -> 1 < a)%Z.
-  {
-    intros H.
-    destruct (Zle_lt_or_eq _ _ H) as [H0|H0].
-    - assumption.
-    - rewrite <- H0 in *.
-      discriminate Heven.
-  }
-  omega.
-Qed.
-Theorem thm_even_is_2_mul :
-  forall a, Z.even a = true -> exists b, a = (2 * b)%Z.
-Proof.
-  intros.
-  destruct a as [|[]|[]].
-  all : simpl in * ; try discriminate H.
-  - exists 0%Z ; trivial.
-  - exists (Z.pos p) ; trivial.
-  - exists (Z.neg p) ; trivial.
-Qed.
-
-Theorem thm_Zeven_pos_explicit_1 :
-  forall a : positive,
-    Z.even (Z.pos (a~1)) = false.
-Proof.
-  trivial.
-Qed.
-Theorem thm_Zeven_pos_explicit_0 :
-  forall a : positive,
-    Z.even (Z.pos (a~0)) = true.
-Proof.
-  trivial.
-Qed.
-Theorem thm_Zeven_neg_explicit_1 :
-  forall a : positive,
-    Z.even (Z.neg (a~1)) = false.
-Proof.
-  trivial.
-Qed.
-Theorem thm_Zeven_neg_explicit_0 :
-  forall a : positive,
-    Z.even (Z.neg (a~0)) = true.
-Proof.
-  trivial.
-Qed.
-
-
-Hint Rewrite
-Z.even_add
-Z.even_sub
-Z.even_opp
-Z.even_0
-Z.even_1
-thm_Zeven_pos_explicit_1
-thm_Zeven_pos_explicit_0
-thm_Zeven_neg_explicit_1
-thm_Zeven_neg_explicit_0
-: rewriteeven.
-
 Section C3.
-  (*
-  Ltac show_mixed_by_ideal g lambda mu :=
-    match goal with
-      | [ |- _]
-        =>
-        (right;
-         refine (mixed_by_ideal g lambda mu _ _ _) ;
-         [
-           refine (mixed_by_hand g mu _) ;
-           unfold g ;
-           simpl ; trivial
-         |
-         tac_length
-         |
-         unfold g ;
-           unfold Zvec_short_sub, lie_is_radical_revwt_alg ;
-           simpl ;
-           unfold Zvec_nondecb ;
-           simpl_extra ;
-           omega
-        ])
-    end.
-   *)
   Ltac show_mixed_by_ideal g mu :=
     repeat match goal with
              | [ |- _ /\ _ ] => split
@@ -187,7 +100,8 @@ Section C3.
         tauto.
     - left.
       simpl in Htot.
-      destruct (thm_even_is_2_mul _ Htot) as [c2 Hc].
+      rewrite Z.even_spec in Htot.
+      destruct Htot as [c2 Hc].
       rewrite Hc in *.
       exists 1, c2.
       unfold is_exceptional_multiplier, lie_radical_fundamental_revwt_alg, g, lie_embedding_dim, lie_rank.
@@ -213,6 +127,48 @@ Section C3.
       tauto.
   Qed.
 End C3.
+
+Section reduction.
+  Theorem thm_reduction1 :
+    forall g h,
+      lie_algebra_type g = lie_C_type
+      -> lie_algebra_type h = lie_C_type
+      -> lie_rank g = 1 + lie_rank h
+      -> forall mu mun,
+           (0 <= mun <= hd mun mu)%Z
+           -> Z.Even mun
+           -> Is_mixed_revwt_alg h mu
+           -> Is_mixed_revwt_alg g (mun::mu).
+  Proof.
+    intros g h Hgtype Hhtype Hrank mu mun [H0 H1] [a Ha] Hmu.
+    destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
+    destruct h ; try discriminate Hhtype ; destruct s as [m Hm].
+    simpl in Hgtype, Hhtype, Hrank.
+    refine (mixed_by_induction _ _ _ _ Hmu _).
+    unfold Is_known_w0_branching_revwt_alg ; simpl.
+    pose (Hmurad := thm_mixed_is_radical _ _ Hmu).
+    unfold lie_is_radical_revwt_alg, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank, Is_known_w0_branching_C_revwt in *.
+    repeat (rewrite Bool.andb_true_iff in *)
+           || (rewrite Nat.eqb_eq in *)
+           || simpl.
+    intuition.
+    all : try (refine (thm_Zvec_nondecb_join mun mu H1 _) ; assumption).
+    all : try (rewrite Z.leb_le ; assumption).
+    all : try (rewrite Z.add_comm, Z.even_add_even ; [|exists a] ; intuition).
+    rewrite thm_Zvec_nondecb_long_min_tl.
+    rewrite thm_Zvec_nondecb_short_max_tl.
+    simpl.
+    - clear.
+      induction mu ; [tauto|].
+      simpl.
+      rewrite Bool.andb_true_iff, Z.even_sub.
+      exact (conj (eqb_reflx _) IHmu).
+    - destruct mu.
+      + trivial.
+      + apply thm_Zvec_nondecb_join ; assumption.
+    - assumption.
+  Qed.
+End reduction.
 
 Section main.
   Theorem thm_main_C :

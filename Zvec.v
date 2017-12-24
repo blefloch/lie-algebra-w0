@@ -114,6 +114,59 @@ Section Zhelpers.
   Qed.
 End Zhelpers.
 
+Section Zeven.
+  Theorem thm_Z_even_pos :
+    forall a, Z.even a = true -> (0 < a)%Z -> (2 <= a)%Z.
+  Proof.
+    intros a Heven.
+    assert (1 <= a -> 1 < a)%Z.
+    {
+      intros H.
+      destruct (Zle_lt_or_eq _ _ H) as [H0|H0].
+      - assumption.
+      - rewrite <- H0 in *.
+        discriminate Heven.
+    }
+    omega.
+  Qed.
+  Theorem thm_Zeven_pos_explicit_1 :
+    forall a : positive,
+      Z.even (Z.pos (a~1)) = false.
+  Proof.
+    trivial.
+  Qed.
+  Theorem thm_Zeven_pos_explicit_0 :
+    forall a : positive,
+      Z.even (Z.pos (a~0)) = true.
+  Proof.
+    trivial.
+  Qed.
+  Theorem thm_Zeven_neg_explicit_1 :
+    forall a : positive,
+      Z.even (Z.neg (a~1)) = false.
+  Proof.
+    trivial.
+  Qed.
+  Theorem thm_Zeven_neg_explicit_0 :
+    forall a : positive,
+      Z.even (Z.neg (a~0)) = true.
+  Proof.
+    trivial.
+  Qed.
+End Zeven.
+
+Hint Rewrite
+Z.even_add
+Z.even_sub
+Z.even_opp
+Z.even_0
+Z.even_1
+thm_Zeven_pos_explicit_1
+thm_Zeven_pos_explicit_0
+thm_Zeven_neg_explicit_1
+thm_Zeven_neg_explicit_0
+: rewriteeven.
+
 Section misc.
   Theorem thm_Zvec_mul_0 :
     forall l, Zvec_mul 0%Z l = repeat 0%Z (length l).
@@ -538,6 +591,36 @@ Section nondecb.
       + unfold Zvec_short_sub in *.
         simpl in *.
         exact (thm_Zvec_nondecb_cons _ _ H1).
+  Qed.
+  Theorem thm_Zvec_nondecb_long_min_tl :
+    forall nu,
+      Zvec_nondecb nu = true
+      -> Zvec_long_min nu (tl nu) = nu.
+  Proof.
+    induction nu ; trivial.
+    destruct nu ; trivial.
+    simpl in *.
+    intro H.
+    rewrite <- (IHnu (thm_Zvec_nondecb_cons _ _ H)) at 3.
+    unfold Zvec_long_min.
+    simpl.
+    rewrite list_eq_iff_hd_tl.
+    exact (conj (Z.min_l _ _ (thm_Zvec_nondecb_01_geq _ _ _ H)) eq_refl).
+  Qed.
+  Theorem thm_Zvec_nondecb_short_max_tl :
+    forall nu,
+      Zvec_nondecb nu = true
+      -> Zvec_short_max nu (tl nu) = tl nu.
+  Proof.
+    induction nu ; trivial.
+    destruct nu ; trivial.
+    simpl in *.
+    intro H.
+    rewrite <- (IHnu (thm_Zvec_nondecb_cons _ _ H)) at 3.
+    unfold Zvec_short_max.
+    simpl.
+    rewrite list_eq_iff_hd_tl.
+    exact (conj (Z.max_r _ _ (thm_Zvec_nondecb_01_geq _ _ _ H)) eq_refl).
   Qed.
 End nondecb.
 
