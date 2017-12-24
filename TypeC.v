@@ -143,7 +143,8 @@ Section reduction.
     intros g h Hgtype Hhtype Hrank mu mun [H0 H1] [a Ha] Hmu.
     destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
     destruct h ; try discriminate Hhtype ; destruct s as [m Hm].
-    simpl in Hgtype, Hhtype, Hrank.
+    clear Hgtype Hhtype.
+    simpl in Hrank.
     refine (mixed_by_induction _ _ _ _ Hmu _).
     unfold Is_known_w0_branching_revwt_alg ; simpl.
     pose (Hmurad := thm_mixed_is_radical _ _ Hmu).
@@ -158,15 +159,70 @@ Section reduction.
     rewrite thm_Zvec_nondecb_long_min_tl.
     rewrite thm_Zvec_nondecb_short_max_tl.
     simpl.
-    - clear.
-      induction mu ; [tauto|].
-      simpl.
-      rewrite Bool.andb_true_iff, Z.even_sub.
-      exact (conj (eqb_reflx _) IHmu).
+    - exact (thm_Zvec_short_even_sub_id _).
     - destruct mu.
       + trivial.
       + apply thm_Zvec_nondecb_join ; assumption.
     - assumption.
+  Qed.
+  Theorem thm_reduction2 :
+    forall g h,
+      lie_algebra_type g = lie_C_type
+      -> lie_algebra_type h = lie_C_type
+      -> lie_rank g = 1 + lie_rank h
+      -> forall mu mun1 mun,
+           (0 <= mun)%Z
+           -> (mun <= mun1)%Z
+           -> (mun1 <= hd mun1 mu)%Z
+           -> Z.Odd mun
+           -> Z.Odd mun1
+           -> Is_mixed_revwt_alg h (0%Z::mu)
+           -> Is_mixed_revwt_alg g (mun::mun1::mu).
+  Proof.
+    intros g h Hgtype Hhtype Hrank mu mun mun1 H0 H1 H2 [a Ha] [b Hb] Hmu.
+    destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
+    destruct h ; try discriminate Hhtype ; destruct s as [m Hm].
+    clear Hgtype Hhtype.
+    simpl in Hrank.
+    refine (mixed_by_induction _ _ _ _ Hmu _).
+    unfold Is_known_w0_branching_revwt_alg ; simpl.
+    pose (Hmurad := thm_mixed_is_radical _ _ Hmu).
+    repeat unfold lie_is_radical_revwt_alg, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank, Is_known_w0_branching_C_revwt in *.
+    repeat (rewrite Bool.andb_true_iff in *) || (rewrite Nat.eqb_eq in *).
+    destruct Hmurad as [Hlen0m [[Hinc0m _] Heven0m]].
+    assert (length (mun1 :: mun :: mu) = n) as Hlen.
+    { rewrite Hrank, <- Hlen0m ; exact eq_refl. }
+    assert (Zvec_nondecb (mun1 :: mun :: mu) = true) as Hincmu.
+    {
+      refine (thm_Zvec_nondecb_join2 _ _ _ H1 _).
+      refine (thm_Zvec_nondecb_join _ _ H2 _).
+      exact (thm_Zvec_nondecb_cons _ _ Hinc0m).
+    }
+    assert ((0 <=? hd 0 (mun1 :: mun :: mu))%Z = true).
+    { rewrite Z.leb_le ; assumption. }
+    assert (Z.even (Zvec_total (mun1 :: mun :: mu)) = true).
+    {
+      simpl.
+      rewrite Ha, Hb.
+      autorewrite with rewriteeven.
+      simpl in Heven0m.
+      rewrite Heven0m.
+      tauto.
+    }
+    intuition.
+    simpl tl.
+    pose (Hmin := thm_Zvec_nondecb_long_min_tl
+                  (mun::mu) (thm_Zvec_nondecb_cons _ _ Hincmu)).
+    pose (Hmax := thm_Zvec_nondecb_short_max_tl
+                    (mun::mu) (thm_Zvec_nondecb_cons _ _ Hincmu)).
+    simpl in Hmin, Hmax.
+    unfold Zvec_long_min, Zvec_short_max in *.
+    simpl Zvec_short_map_zip in *.
+    rewrite Hmin, Hmax, (Z.max_l _ _ H0).
+    simpl.
+    rewrite (thm_Zvec_short_even_sub_id _), Ha, Hb.
+    autorewrite with rewriteeven.
+    tauto.
   Qed.
 End reduction.
 

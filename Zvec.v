@@ -153,18 +153,32 @@ Section Zeven.
   Proof.
     trivial.
   Qed.
+  Theorem thm_Zeven_mul_2_l :
+    forall n, Z.even (2 * n) = true.
+  Proof.
+    intro n ; case n ; simpl ; tauto.
+  Qed.
+  Theorem thm_Zeven_mul_2_r :
+    forall n, Z.even (n * 2) = true.
+  Proof.
+    intros.
+    rewrite Z.mul_comm.
+    exact (thm_Zeven_mul_2_l _).
+  Qed.
 End Zeven.
 
 Hint Rewrite
-Z.even_add
-Z.even_sub
-Z.even_opp
-Z.even_0
-Z.even_1
-thm_Zeven_pos_explicit_1
-thm_Zeven_pos_explicit_0
-thm_Zeven_neg_explicit_1
-thm_Zeven_neg_explicit_0
+     Z.even_add
+     Z.even_sub
+     Z.even_opp
+     Z.even_0
+     Z.even_1
+     thm_Zeven_pos_explicit_1
+     thm_Zeven_pos_explicit_0
+     thm_Zeven_neg_explicit_1
+     thm_Zeven_neg_explicit_0
+     thm_Zeven_mul_2_l
+     thm_Zeven_mul_2_r
 : rewriteeven.
 
 Section misc.
@@ -203,6 +217,15 @@ Section misc.
     try rewrite Z.leb_le in *.
     intuition.
     apply (IHlambda mu) ; intuition.
+  Qed.
+  Theorem thm_Zvec_short_even_sub_id :
+    forall mu,
+      Zvec_short_allb (fun a b : Z => Z.even (a - b)) mu mu = true.
+  Proof.
+    induction mu ; [tauto|].
+    simpl.
+    rewrite Bool.andb_true_iff, Z.even_sub.
+    exact (conj (eqb_reflx _) IHmu).
   Qed.
 End misc.
 
