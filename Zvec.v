@@ -137,6 +137,20 @@ Section misc.
       + simpl_extra.
         firstorder.
   Qed.
+  Theorem thm_Zvec_nonnegb_from_sub :
+    forall lambda mu,
+      length lambda = length mu
+      -> Zvec_all_nonnegb mu = true
+      -> Zvec_all_nonnegb (Zvec_short_sub lambda mu) = true
+      -> Zvec_all_nonnegb lambda = true.
+  Proof.
+    unfold Zvec_all_nonnegb.
+    induction lambda ; destruct mu ; simpl ; intuition.
+    try rewrite Bool.andb_true_iff in *.
+    try rewrite Z.leb_le in *.
+    intuition.
+    apply (IHlambda mu) ; intuition.
+  Qed.
 End misc.
 
 Section leb.
@@ -500,6 +514,31 @@ Section nondecb.
     omega.
     assumption.
   Qed.
+  Theorem thm_Zvec_nondecb_from_sub :
+    forall lambda mu,
+      length lambda = length mu
+      -> Zvec_nondecb mu = true
+      -> Zvec_nondecb (Zvec_short_sub lambda mu) = true
+      -> Zvec_nondecb lambda = true.
+  Proof.
+    induction lambda ; [tauto|].
+    destruct lambda ; [tauto|].
+    destruct mu as [|c [|d mu]] ; try discriminate.
+    intros.
+    apply thm_Zvec_nondecb_join2.
+    - unfold Zvec_nondecb in *.
+      simpl in *.
+      rewrite Bool.andb_true_iff, Z.leb_le in *.
+      intuition.
+    - apply (IHlambda (d::mu)%list).
+      + simpl.
+        injection H.
+        intuition.
+      + exact (thm_Zvec_nondecb_cons _ _ H0).
+      + unfold Zvec_short_sub in *.
+        simpl in *.
+        exact (thm_Zvec_nondecb_cons _ _ H1).
+  Qed.
 End nondecb.
 
 Section total.
@@ -537,6 +576,23 @@ Section total.
       rewrite IHm, thm_Z_of_nat_S.
       rewrite Z.mul_add_distr_r.
       omega.
+  Qed.
+  Theorem thm_Zvec_total_from_sub :
+    forall lambda mu,
+      length lambda = length mu
+      -> (Zvec_total lambda
+          = Zvec_total (Zvec_short_sub lambda mu)
+            + Zvec_total mu)%Z.
+  Proof.
+    induction lambda.
+    all : destruct mu.
+    all : simpl.
+    all : intuition.
+    injection H.
+    intros H0.
+    pose (H1 := IHlambda mu H0).
+    unfold Zvec_short_sub in H1.
+    omega.
   Qed.
 End total.
 
