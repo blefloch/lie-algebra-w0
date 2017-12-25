@@ -33,9 +33,9 @@ Section lie.
   | lie_G2_type.
   Inductive lie_algebra : Set :=
   | lie_A : {n | n > 0} -> lie_algebra
-  | lie_B : {n | n > 1} -> lie_algebra
-  | lie_C : {n | n > 2} -> lie_algebra
-  | lie_D : {n | n > 3} -> lie_algebra
+  | lie_B : {n | n > 0} -> lie_algebra
+  | lie_C : {n | n > 0} -> lie_algebra
+  | lie_D : {n | n > 1} -> lie_algebra
   | lie_E6
   | lie_E7
   | lie_E8

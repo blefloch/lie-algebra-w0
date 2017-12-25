@@ -73,12 +73,14 @@ Section data.
            | lie_B (exist _ 3 _), (2::2::2::nil)%Z => true
            | lie_B (exist _ 4 _), (0::1::2::2::nil)%Z => true
            | lie_B (exist _ 4 _), (0::0::3::3::nil)%Z => true
-           | lie_C (exist _ 3 _), (0::1::3::nil)%Z => true
+           | lie_C (exist _ 2 _), (1::3::nil)%Z => true
            | lie_C (exist _ 3 _), (1::1::2::nil)%Z => true
            | lie_C (exist _ 3 _), (0::3::3::nil)%Z => true
            | lie_C (exist _ 3 _), (2::3::3::nil)%Z => true
            | lie_C (exist _ 3 _), (4::4::4::nil)%Z => true
            | lie_C (exist _ 4 _), (0::2::2::2::nil)%Z => true
+           | lie_C (exist _ 5 _), (0::2::2::2::2::nil)%Z => true
+           | lie_C (exist _ 5 _), (2::2::2::2::2::nil)%Z => true
            | _, _ => false
          end.
   (*TODO: add more mixed representations shown "by_hand".*)
