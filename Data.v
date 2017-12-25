@@ -32,12 +32,12 @@ Section data.
                    || (i =? 2) && (m <=? 2)%Z
                    || (m <=? 1)%Z
             | lie_C (exist _ n _)
-              => (n =? 2)
-                   || (n =? 3) && (i =? 3) && (m <=? 1)%Z
-                   || (n =? 4) && (i =? 4) && (m <=? 2)%Z
-                   || (i =? 1)
-                   || (i =? 2) && (m <=? 2)%Z
-                   || (even i) && (m <=? 1)%Z
+              => (i =? 1)
+                   || (even i) && (m =? 1)%Z
+                   || (i =? 2) && (m =? 2)%Z
+                   || (n =? 2)
+                   || (n =? 3) && (i =? 3) && (m =? 1)%Z
+                   || (n =? 4) && (i =? 4) && (m =? 2)%Z
             | lie_D (exist _ n _)
               => (n =? 3)
                    || (n =? 4) && ((i =? 3) || (i =? 4))
@@ -78,6 +78,7 @@ Section data.
            | lie_C (exist _ 3 _), (0::3::3::nil)%Z => true
            | lie_C (exist _ 3 _), (2::3::3::nil)%Z => true
            | lie_C (exist _ 3 _), (4::4::4::nil)%Z => true
+           | lie_C (exist _ 4 _), (0::2::2::2::nil)%Z => true
            | _, _ => false
          end.
   (*TODO: add more mixed representations shown "by_hand".*)

@@ -10,11 +10,11 @@ Require Import Zvec.
 Open Scope nat_scope.
 
 Section helpers.
-  Local Definition basic_list {A} (x : A) i (y : A) n :=
+  Definition basic_list {A} (x : A) i (y : A) n :=
     if (1 <=? i) && (i <=? n)
     then (repeat y (i - 1))++x::(repeat y (n - i))
     else repeat y n.
-  Local Definition basic_list_rev {A} (x : A) i (y : A) n :=
+  Definition basic_list_rev {A} (x : A) i (y : A) n :=
     if (1 <=? i) && (i <=? n)
     then (repeat y (n - i))++x::(repeat y (i - 1))
     else repeat y n.
