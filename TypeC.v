@@ -685,6 +685,36 @@ Section reduction.
       + apply thm_Zvec_nondecb_join ; assumption.
     - assumption.
   Qed.
+  Theorem thm_reduction2_radical :
+    forall g h,
+      lie_algebra_type g = lie_C_type
+      -> lie_algebra_type h = lie_C_type
+      -> lie_rank g = 1 + lie_rank h
+      -> forall mu a b,
+           Z.Odd a
+           -> Z.Odd b
+           -> lie_is_radical_revwt_alg g (a::b::mu) = true
+           -> lie_is_radical_revwt_alg h (0%Z::mu) = true.
+  Proof.
+    intros g h Hgtype Hhtype Hrank mu a b HaOdd HbOdd Hradlambda.
+    destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
+    destruct h ; try discriminate Hhtype ; destruct s as [m Hm].
+    clear Hgtype Hhtype.
+    simpl in Hrank.
+    unfold lie_is_radical_revwt_alg, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank in *.
+    autorewrite with rewritesome in *.
+    simpl in *.
+    firstorder.
+    - refine (thm_Zvec_nondecb_join _ _ _ _).
+      + destruct mu ; [exact (Z.le_refl _)|simpl].
+        unfold Zvec_nondecb, tl, Zvec_short_allb in H0.
+        simpl_extra in H0.
+        omega.
+      + refine (thm_Zvec_nondecb_cons _ _ (thm_Zvec_nondecb_cons _ _ H0)).
+    - rewrite H3, H4 in H1.
+      autorewrite with rewriteeven in H1.
+      destruct (Z.even (Zvec_total mu)) ; compute in H1 ; trivial ; discriminate.
+  Qed.
   Theorem thm_reduction2 :
     forall g h,
       lie_algebra_type g = lie_C_type
@@ -764,6 +794,9 @@ Ltac show_mixed_by_ideal g mu Hnval :=
                unfold Zvec_nondecb ;
                simpl_extra
            | [ H : Z.Even _ |- context[Z.even] ]
+             => let x := fresh "x" in
+                (destruct H as [x H] ; rewrite H in *)
+           | [ H : Z.Odd _ |- context[Z.even] ]
              => let x := fresh "x" in
                 (destruct H as [x H] ; rewrite H in *)
            | [ |- context[Z.even] ]
@@ -977,7 +1010,332 @@ Section C3.
  *)
 End C3.
 
+Theorem thm_Zleb_add_const :
+  forall a b c, (a + b <=? a + c)%Z = (b <=? c)%Z.
+Proof.
+  intros a b c.
+  destruct (Sumbool.sumbool_of_bool (b <=? c)%Z) as [H|H] ;
+    rewrite H.
+  - exact (Zle_bool_plus_mono _ _ _ _ (Z.leb_refl _) H).
+  - rewrite Z.leb_gt in *.
+    exact (Zplus_lt_compat_l _ _ _ H).
+Qed.
+Theorem thm_Zvec_nondecb_plus_constant :
+  forall a lambda,
+    Zvec_nondecb (map (Z.add a) lambda)
+    = Zvec_nondecb lambda.
+Proof.
+  induction lambda.
+  - trivial.
+  - destruct lambda.
+    + trivial.
+    + unfold Zvec_nondecb in *.
+      simpl in *.
+      rewrite IHlambda, thm_Zleb_add_const.
+      trivial.
+Qed.
+Theorem thm_Zvec_total_plus_constant :
+  forall a lambda,
+    Zvec_total (map (Z.add a) lambda)
+    = (Zvec_total lambda + a * Z.of_nat (length lambda))%Z.
+Proof.
+  induction lambda.
+  - compute ; destruct a ; trivial.
+  - simpl length in *.
+    simpl map in *.
+    simpl Zvec_total in *.
+    rewrite thm_Z_of_nat_S, IHlambda.
+    ring.
+Qed.
+Theorem thm_Zvec_sub_add_const :
+  forall nu t,
+    Zvec_short_sub (nu) (map (Z.add t) nu)
+    = repeat (-t)%Z (length nu).
+Proof.
+  intros nu t.
+  unfold Zvec_short_sub.
+  induction nu.
+  - trivial.
+  - simpl.
+    rewrite IHnu, Z.add_comm, Z.sub_add_distr, Z.sub_diag, Z.sub_0_l.
+    trivial.
+Qed.
+Theorem thm_Zvec_sub_add_const2 :
+  forall a nu t,
+    Zvec_short_sub (a::nu) (a::map (Z.add t) nu)
+    = 0%Z::repeat (-t)%Z (length nu).
+Proof.
+  intros a nu t.
+  rewrite <- thm_Zvec_sub_add_const.
+  unfold Zvec_short_sub.
+  simpl.
+  rewrite Z.sub_diag.
+  trivial.
+Qed.
+Theorem thm_Z_of_nat_even :
+  forall n, Z.even (Z.of_nat n) = Nat.even n.
+Proof.
+  induction n.
+  - trivial.
+  - rewrite Nat.even_succ, <- Nat.negb_even, <- IHn.
+    refine (negb_sym _ _ _).
+    rewrite Z.negb_even, <- Z.odd_succ, Nat2Z.inj_succ.
+    trivial.
+Qed.
+Theorem thm_cons_eq_repeat :
+  forall A (a : A) lambda b n, a::lambda = repeat b n -> a = b.
+Proof.
+  destruct n ; simpl in * ; intuition ; try discriminate.
+  injection H.
+  trivial.
+Qed.
+Theorem thm_Odd_even_false :
+  forall n, Nat.Odd n -> Nat.even n = false.
+Proof.
+  intros n H.
+  rewrite <- Nat.odd_spec in H.
+  rewrite <- Nat.negb_odd, H.
+  trivial.
+Qed.
+
+
+Theorem thm_C_radical_nondecb :
+  forall g lambda,
+    lie_algebra_type g = lie_C_type
+    -> lie_is_radical_revwt_alg g lambda = true
+    -> Zvec_nondecb lambda = true.
+Proof.
+  intros g lambda Hgtype Hrad.
+  destruct g as [| |[n Hn]| | | | | | ] ;
+    try (simpl in Hgtype; discriminate Hgtype).
+  unfold lie_is_radical_revwt_alg in Hrad.
+  simpl_extra in Hrad.
+  intuition.
+Qed.
+
 Section main.
+  Theorem thm_main_C_hd_even :
+    forall n
+           (Hn1 : S (S (S n)) > 0)
+           a lambda,
+      let g := lie_C (exist (fun n : nat => n > 0) (S (S (S n))) Hn1) in
+      forall (Hradg : lie_is_radical_revwt_alg g (a :: lambda) = true)
+             (Hn : S (S n) > 0),
+        let h := lie_C (exist (fun n : nat => n > 0) (S (S n)) Hn) in
+        (forall lambda : list Z,
+           lie_is_radical_revwt_alg h lambda = true ->
+           Is_exceptional_revwt_alg h lambda \/ Is_mixed_revwt_alg h lambda)
+        -> lie_algebra_type h = lie_C_type
+        -> lie_algebra_type g = lie_C_type
+        -> lie_rank g = 1 + lie_rank h
+        -> (0 <= a)%Z
+        -> (a <= hd a lambda)%Z
+        -> Z.Even a
+        -> Is_exceptional_revwt_alg g (a :: lambda) \/
+           Is_mixed_revwt_alg g (a :: lambda).
+  Proof.
+    intros n Hn1 a lambda g Hradg Hn h IHnHn Hhtype Hgtype Hrank H0a Hahd HaEven.
+    destruct (IHnHn lambda (thm_reduction1_radical
+                              g h Hgtype Hhtype Hrank lambda a HaEven Hradg))
+               as [Hexc|Hmix].
+    - destruct (thm_C_exceptional_structure h lambda Hhtype Hexc)
+        as [H|[H|[H|[H|[H|[H|H]]]]]].
+      + rewrite H in Hahd.
+        simpl in Hahd.
+        assert (a = 0%Z) as H0 ; [omega|].
+        rewrite H0.
+        exact (or_introl
+                 (thm_C_prepend_zero_exceptional0
+                    g h Hgtype Hhtype Hrank lambda H)).
+      + destruct H as [m [H0m H]].
+        rewrite H in Hahd.
+        simpl in Hahd.
+        assert (a = 0%Z) as H0 ; [omega|].
+        rewrite H0.
+        left.
+        refine (thm_C_prepend_zero_exceptional1 g h Hgtype Hhtype Hrank lambda _).
+        exists m ; intuition.
+      + destruct H as [j [H1j [Hjn H]]].
+        assert (2 * j =? 0 = false) as H1.
+        { rewrite Nat.eqb_neq. omega. }
+        rewrite H, thm_hd_app, thm_hd_repeat, thm_hd_repeat, H1 in Hahd.
+        assert (a = 0%Z) as H0.
+        {
+          destruct (_ =? _) in Hahd ;
+          destruct HaEven as [b Hb] ; omega.
+        }
+        rewrite H0.
+        left.
+        refine (thm_C_prepend_zero_exceptional2 g h Hgtype Hhtype Hrank lambda _).
+        exists j ; intuition.
+      + left.
+        rewrite H, thm_hd_app, thm_hd_repeat in Hahd.
+        assert (2 <= lie_rank h) as H1.
+        { unfold h, lie_rank ; omega. }
+        destruct (le_lt_eq_dec _ _ H1) as [Hrkh2|Hrkh2].
+        * assert (lie_rank h - 2 =? 0 = false) as H2.
+          { rewrite Nat.eqb_neq. omega. }
+          rewrite H2 in Hahd.
+          assert (a = 0%Z) as H0 ; [omega|].
+          rewrite H0.
+          exact (thm_C_prepend_zero_exceptional3 g h Hgtype Hhtype Hrank lambda H1 H).
+        * assert (n = 0) as Hnval.
+          { unfold h in * ; simpl in * ; omega. }
+          rewrite <- Hrkh2 in *.
+          destruct (thm_even_between_0_and_2 a HaEven H0a Hahd) as [H0|H0].
+          all : exists (if (a =? 2)%Z then 3 else 2),
+                  (if (a =? 2)%Z then 1%Z else 2%Z).
+          all : rewrite H, H0 in *.
+          all : unfold g, is_exceptional_multiplier,
+                lie_radical_fundamental_revwt_alg.
+          all : simpl.
+          all : rewrite Hnval in *.
+          all : tauto.
+      + (*The exceptional 2::2::2::nil is treated elsewhere.  Others are at least
+                2::3::3::nil or 0::3::3::nil or 4::4::4::nil, mixed by hand*)
+        destruct H as [m [H3m H]].
+        assert (n = 0) as Hnval.
+        {
+          pose (Hlen := thm_radical_length _ _ Hradg).
+          rewrite H in Hlen.
+          unfold g, lie_embedding_dim, lie_rank in Hlen.
+          simpl_extra in Hlen.
+          intuition.
+        }
+        rewrite H in *.
+        simpl in *.
+        destruct (Zle_lt_or_eq _ _ Hahd) as [H0|H0].
+        destruct (Zle_lt_or_eq _ _ H0a) as [H1|H1].
+        * assert (2 <= a)%Z.
+          {
+            destruct HaEven as [a2 Ha2].
+            rewrite Ha2 in *.
+            omega.
+          }
+          show_mixed_by_ideal g (2::3::3::nil)%Z Hnval.
+        * rewrite <- H1 in *.
+          show_mixed_by_ideal g (0::3::3::nil)%Z Hnval.
+        * rewrite H0, Hnval in *.
+          assert (4 <= m)%Z.
+          {
+            destruct HaEven as [a2 Ha2].
+            rewrite Ha2 in *.
+            omega.
+          }
+          show_mixed_by_ideal g (4::4::4::nil)%Z Hnval.
+      + assert (n = 1) as Hnval.
+        {
+          pose (Hlen := thm_radical_length _ _ Hradg).
+          rewrite H in Hlen.
+          unfold g, lie_embedding_dim, lie_rank in Hlen.
+          simpl_extra in Hlen.
+          intuition.
+        }
+        rewrite H in *.
+        simpl in *.
+        destruct (thm_even_between_0_and_2 a HaEven H0a Hahd) as [H0|H0].
+        * rewrite H0.
+          right.
+          refine (mixed_by_hand g _ _).
+          compute ; try rewrite Hnval ; tauto.
+        * left.
+          exists 4, 2%Z.
+          unfold g, is_exceptional_multiplier, lie_radical_fundamental_revwt_alg.
+          simpl in *.
+          rewrite H0, Hnval in *.
+          tauto.
+      + assert (n = 2) as Hnval.
+        {
+          pose (Hlen := thm_radical_length _ _ Hradg).
+          rewrite H in Hlen.
+          unfold g, lie_embedding_dim, lie_rank in Hlen.
+          simpl_extra in Hlen.
+          intuition.
+        }
+        rewrite H in Hahd.
+        simpl in Hahd.
+        destruct (thm_even_between_0_and_2 a HaEven H0a Hahd) as [H0|H0].
+        all : rewrite H, H0.
+        all : right.
+        all : refine (mixed_by_hand g _ _).
+        all : compute ; try rewrite Hnval ; tauto.
+    - exact (or_intror
+               (thm_reduction1
+                  g h Hgtype Hhtype Hrank lambda a H0a Hahd HaEven Hmix)).
+  Qed.
+
+  Theorem thm_main_C_hd_odd_odd :
+    forall n
+           (Hn1 : S (S (S n)) > 0)
+           a b lambda,
+      let g := lie_C (exist (fun n : nat => n > 0) (S (S (S n))) Hn1) in
+      forall (Hradg : lie_is_radical_revwt_alg g (a::b::lambda) = true)
+             (Hn : S (S n) > 0),
+        let h := lie_C (exist (fun n : nat => n > 0) (S (S n)) Hn) in
+        (forall lambda : list Z,
+           lie_is_radical_revwt_alg h lambda = true ->
+           Is_exceptional_revwt_alg h lambda \/ Is_mixed_revwt_alg h lambda)
+        -> lie_algebra_type h = lie_C_type
+        -> lie_algebra_type g = lie_C_type
+        -> lie_rank g = 1 + lie_rank h
+        -> (0 <= a)%Z
+        -> (a <= hd a (b::lambda))%Z
+        -> Z.Odd a
+        -> length (a :: b :: lambda) = lie_embedding_dim g
+        -> Z.Odd b
+        -> Is_exceptional_revwt_alg g (a::b::lambda) \/
+           Is_mixed_revwt_alg g (a::b::lambda).
+  Proof.
+    intros n Hn1 a b lambda g Hradg Hn h IHnHn Hhtype Hgtype Hrank H0a Hahd HaOdd Hlen HbOdd.
+    simpl in Hahd.
+    assert (1 <= a)%Z as H1a.
+    { destruct HaOdd as [a2 Ha2] ; rewrite Ha2 in * ; omega. }
+    assert (1 <= b)%Z as H1b.
+    { omega. }
+    destruct lambda as [|c lambda] ; try (simpl in * ; discriminate Hlen).
+    assert (b <= c)%Z as Hbc.
+    {
+      pose (Hinc := thm_C_radical_nondecb _ _ Hgtype Hradg).
+      unfold Zvec_nondecb in Hinc.
+      simpl_extra in Hinc.
+      omega.
+    }
+    destruct (IHnHn (0%Z::c::lambda)
+                    (thm_reduction2_radical
+                       g h Hgtype Hhtype Hrank _ a b HaOdd HbOdd Hradg))
+      as [Hexc|Hmix].
+    - destruct (thm_C_exceptional_structure h _ Hhtype Hexc)
+        as [H|[H|[H|[H|[H|[H|H]]]]]].
+      + simpl in H.
+        repeat rewrite list_eq_iff_hd_tl in H.
+        omega.
+      + destruct H as [m [H0m H]].
+        simpl in H.
+        destruct n.
+        * simpl in *.
+          repeat rewrite list_eq_iff_hd_tl in H.
+          destruct H as [_ [Hc H]].
+          rewrite Hc, H in *.
+          assert (b < m * 2)%Z.
+          { destruct HbOdd as [b2 Hb2] ; rewrite Hb2 in * ; omega. }
+          show_mixed_by_ideal g (1::1::2::nil)%Z omitted.
+        * simpl in H.
+          repeat rewrite list_eq_iff_hd_tl in H.
+          omega.
+      + admit.
+      + simpl in H.
+        admit.
+      + destruct H as [m [H3m H]].
+        repeat rewrite list_eq_iff_hd_tl in H.
+        omega.
+      + discriminate H.
+      + discriminate H.
+    - exact (or_intror
+               (thm_reduction2
+                  g h Hgtype Hhtype Hrank (c::lambda) b a H0a Hahd Hbc HaOdd HbOdd Hmix)).
+  Admitted.
+
+
   Theorem thm_main_C :
     forall g,
       lie_algebra_type g = lie_C_type
@@ -1021,138 +1379,193 @@ Section main.
         { exact (thm_C_radical_cons_le _ _ _ Hgtype Hradg). }
         destruct (Z.Even_or_Odd a) as [HaEven|HaOdd].
         {
-          destruct (IHnHn lambda
-                          (thm_reduction1_radical
-                             g h Hgtype Hhtype Hrank lambda a HaEven Hradg))
-            as [Hexc|Hmix].
-          - destruct (thm_C_exceptional_structure h lambda Hhtype Hexc)
-              as [H|[H|[H|[H|[H|[H|H]]]]]].
-            + rewrite H in Hahd.
-              simpl in Hahd.
-              assert (a = 0%Z) as H0 ; [omega|].
-              rewrite H0.
-              exact (or_introl
-                       (thm_C_prepend_zero_exceptional0
-                          g h Hgtype Hhtype Hrank lambda H)).
-            + destruct H as [m [H0m H]].
-              rewrite H in Hahd.
-              simpl in Hahd.
-              assert (a = 0%Z) as H0 ; [omega|].
-              rewrite H0.
-              left.
-              refine (thm_C_prepend_zero_exceptional1 g h Hgtype Hhtype Hrank lambda _).
-              exists m ; intuition.
-            + destruct H as [j [H1j [Hjn H]]].
-              assert (2 * j =? 0 = false) as H1.
-              { rewrite Nat.eqb_neq. omega. }
-              rewrite H, thm_hd_app, thm_hd_repeat, thm_hd_repeat, H1 in Hahd.
-              assert (a = 0%Z) as H0.
-              {
-                destruct (_ =? _) in Hahd ;
-                destruct HaEven as [b Hb] ; omega.
-              }
-              rewrite H0.
-              left.
-              refine (thm_C_prepend_zero_exceptional2 g h Hgtype Hhtype Hrank lambda _).
-              exists j ; intuition.
-            + left.
-              rewrite H, thm_hd_app, thm_hd_repeat in Hahd.
-              assert (2 <= lie_rank h) as H1.
-              { unfold h, lie_rank ; omega. }
-              destruct (le_lt_eq_dec _ _ H1) as [Hrkh2|Hrkh2].
-              * assert (lie_rank h - 2 =? 0 = false) as H2.
-                { rewrite Nat.eqb_neq. omega. }
-                rewrite H2 in Hahd.
-                assert (a = 0%Z) as H0 ; [omega|].
-                rewrite H0.
-                exact (thm_C_prepend_zero_exceptional3 g h Hgtype Hhtype Hrank lambda H1 H).
-              * assert (n = 0) as Hnval.
-                { unfold h in * ; simpl in * ; omega. }
-                rewrite <- Hrkh2 in *.
-                destruct (thm_even_between_0_and_2 a HaEven H0a Hahd) as [H0|H0].
-                all : exists (if (a =? 2)%Z then 3 else 2),
-                        (if (a =? 2)%Z then 1%Z else 2%Z).
-                all : rewrite H, H0 in *.
-                all : unfold g, is_exceptional_multiplier,
-                      lie_radical_fundamental_revwt_alg.
-                all : simpl.
-                all : rewrite Hnval in *.
-                all : tauto.
-            + (*The exceptional 2::2::2::nil is treated elsewhere.  Others are at least
-                2::3::3::nil or 0::3::3::nil or 4::4::4::nil, mixed by hand*)
-              destruct H as [m [H3m H]].
-              assert (n = 0) as Hnval.
-              {
-                pose (Hlen := thm_radical_length _ _ Hradg).
-                rewrite H in Hlen.
-                unfold g, lie_embedding_dim, lie_rank in Hlen.
-                simpl_extra in Hlen.
-                intuition.
-              }
-              rewrite H in *.
-              simpl in *.
-              destruct (Zle_lt_or_eq _ _ Hahd) as [H0|H0].
-              destruct (Zle_lt_or_eq _ _ H0a) as [H1|H1].
-              * assert (2 <= a)%Z.
-                {
-                  destruct HaEven as [a2 Ha2].
-                  rewrite Ha2 in *.
-                  omega.
-                }
-                show_mixed_by_ideal g (2::3::3::nil)%Z Hnval.
-              * rewrite <- H1 in *.
-                show_mixed_by_ideal g (0::3::3::nil)%Z Hnval.
-              * rewrite H0, Hnval in *.
-                assert (4 <= m)%Z.
-                {
-                  destruct HaEven as [a2 Ha2].
-                  rewrite Ha2 in *.
-                  omega.
-                }
-                show_mixed_by_ideal g (4::4::4::nil)%Z Hnval.
-            + assert (n = 1) as Hnval.
-              {
-                pose (Hlen := thm_radical_length _ _ Hradg).
-                rewrite H in Hlen.
-                unfold g, lie_embedding_dim, lie_rank in Hlen.
-                simpl_extra in Hlen.
-                intuition.
-              }
-              rewrite H in *.
-              simpl in *.
-              destruct (thm_even_between_0_and_2 a HaEven H0a Hahd) as [H0|H0].
-              * rewrite H0.
-                right.
-                refine (mixed_by_hand g _ _).
-                compute ; try rewrite Hnval ; tauto.
-              * left.
-                exists 4, 2%Z.
-                unfold g, is_exceptional_multiplier, lie_radical_fundamental_revwt_alg.
-                simpl in *.
-                rewrite H0, Hnval in *.
-                tauto.
-            + assert (n = 2) as Hnval.
-              {
-                pose (Hlen := thm_radical_length _ _ Hradg).
-                rewrite H in Hlen.
-                unfold g, lie_embedding_dim, lie_rank in Hlen.
-                simpl_extra in Hlen.
-                intuition.
-              }
-              rewrite H in Hahd.
-              simpl in Hahd.
-              destruct (thm_even_between_0_and_2 a HaEven H0a Hahd) as [H0|H0].
-              all : rewrite H, H0.
-              all : right.
-              all : refine (mixed_by_hand g _ _).
-              all : compute ; try rewrite Hnval ; tauto.
-          - exact (or_intror
-                     (thm_reduction1
-                        g h Hgtype Hhtype Hrank lambda a H0a Hahd HaEven Hmix)).
+          pose (H := IHnHn lambda
+                           (thm_reduction1_radical
+                              g h Hgtype Hhtype Hrank lambda a HaEven Hradg)).
+          exact (thm_main_C_hd_even
+                   n Hn1 a lambda Hradg Hn
+                   IHnHn Hhtype Hgtype Hrank H0a Hahd HaEven).
         }
         {
-          (*First component is odd.*)
-          admit.
+          pose (Hlen := thm_radical_length _ _ Hradg) ; clearbody Hlen.
+          destruct lambda as [|b lambda] ; try discriminate Hlen.
+          destruct (Z.Even_or_Odd b) as [HbEven|HbOdd].
+          {
+            (*First component (a) is odd, second (b) is even.
+             For g of odd rank (n even), subtract 1 starting from b onwards.
+             For g of even rank (n odd), subtract 1 starting from a onwards.
+             In both cases show that the resulting weight is mixed hence the
+             original weight a::b::lambda is mixed.*)
+            destruct (Nat.Even_or_Odd n) as [HnEven|HnOdd].
+            {
+              pose (mu := a::(map (Z.add (-1)%Z) (b::lambda))).
+              right ; refine (mixed_by_ideal g _ mu _ _ _).
+              - admit.
+              - clear ; tac_length.
+              - unfold mu.
+                rewrite thm_Zvec_sub_add_const2.
+                simpl (- -1)%Z.
+                assert (length (b::lambda) = S (S n)) as H.
+                { clear - Hlen ; simpl in * ; omega. }
+                rewrite H.
+                unfold lie_is_radical_revwt_alg, g, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank.
+                autorewrite with rewritesome.
+                repeat split.
+                + clear ; tac_length.
+                + refine (thm_Zvec_nondecb_join _ _ _ _).
+                  simpl ; omega.
+                  refine (thm_Zvec_nondecb_repeat _ _).
+                + unfold Zvec_total ; fold Zvec_total.
+                  rewrite thm_Zvec_total_repeat, thm_Z_of_nat_S, thm_Z_of_nat_S, Z.mul_1_r.
+                  autorewrite with rewriteeven.
+                  rewrite thm_Z_of_nat_even.
+                  rewrite <- Nat.even_spec in HnEven.
+                  rewrite HnEven.
+                  trivial.
+            }
+            {
+              pose (mu := (map (Z.add (-1)%Z) (a::b::lambda))).
+              right ; refine (mixed_by_ideal g _ mu _ _ _).
+              - pose (a' := (-1 + a)%Z).
+                pose (b' := (-1 + b)%Z).
+                pose (lambda' := (map (Z.add (-1)%Z) lambda)).
+                assert (mu = a'::b'::lambda') as Hmuval.
+                { trivial. }
+                assert (1 <= a)%Z as H1a.
+                { destruct HaOdd as [a2 Ha2] ; rewrite Ha2 ; omega. }
+                assert (0 <= a')%Z as H0a'.
+                { unfold a' ; omega. }
+                assert (lie_is_radical_revwt_alg g (a'::b'::lambda') = true) as Hradmu.
+                {
+                  unfold lie_is_radical_revwt_alg.
+                  simpl_extra.
+                  unfold lie_is_radical_revwt_alg in Hradg.
+                  simpl_extra in Hradg.
+                  repeat split.
+                  - unfold lambda'.
+                    simpl_length in Hlen.
+                    tac_length.
+                  - rewrite <- Hmuval.
+                    unfold mu.
+                    rewrite thm_Zvec_nondecb_plus_constant.
+                    tauto.
+                  - assumption.
+                  - unfold Zvec_total.
+                    unfold Zvec_total in Hradg.
+                    fold (Zvec_total (a'::b'::lambda')).
+                    fold (Zvec_total (a::b::lambda)) in Hradg.
+                    rewrite <- Hmuval.
+                    unfold mu.
+                    destruct Hradg as [Hlen2 [[Hinc2 H0a2] Heven]].
+                    rewrite thm_Zvec_total_plus_constant, Hlen, Z.even_add, Heven.
+                    unfold lie_embedding_dim, g, lie_rank.
+                    rewrite Z.even_mul.
+                    repeat rewrite thm_Z_of_nat_S.
+                    autorewrite with rewriteeven.
+                    rewrite thm_Z_of_nat_even, (thm_Odd_even_false _ HnOdd).
+                    trivial.
+                }
+                assert (a' <= hd a' (b'::lambda'))%Z as Ha'hd.
+                {
+                  unfold b', lambda', map, hd, a'.
+                  unfold hd in Hahd.
+                  omega.
+                }
+                assert (Z.Even a') as Ha'Even.
+                {
+                  destruct HaOdd as [a2 Ha2].
+                  unfold a'.
+                  rewrite Ha2.
+                  exists a2.
+                  omega.
+                }
+                destruct (thm_main_C_hd_even
+                            _ Hn1 a' (b'::lambda') Hradmu Hn
+                            IHnHn Hhtype Hgtype Hrank H0a' Ha'hd Ha'Even)
+                  as [Hexc|Hmix] ;
+                  [elimtype False|assumption].
+                simpl in Hahd.
+                assert (1 <= b')%Z as H1b'.
+                { destruct HbEven as [b2 Hb2] ; unfold b' ; rewrite Hb2 ; omega. }
+                assert (forall m nu, a'::b'::lambda' <> m::m::nu) as Hconsneq.
+                {
+                  intros m nu H.
+                  rewrite list_eq_iff_hd_tl, list_eq_iff_hd_tl in H.
+                  destruct HaOdd as [a2 Ha2].
+                  unfold a' in H.
+                  rewrite Ha2 in H.
+                  destruct HbEven as [b2 Hb2].
+                  unfold b' in H.
+                  rewrite Hb2 in H.
+                  omega.
+                }
+                destruct (thm_C_exceptional_structure g _ Hgtype Hexc)
+                  as [H|[H|[H|[H|[H|[H|H]]]]]].
+                + simpl in H.
+                  rewrite list_eq_iff_hd_tl, list_eq_iff_hd_tl in H.
+                  omega.
+                + destruct H as [m [H0m H]].
+                  contradiction (Hconsneq _ _ H).
+                + destruct H as [j [H1j [Hjmax H]]].
+                  destruct (le_lt_eq_dec _ _ Hjmax) as [H0|H0].
+                  {
+                    assert (1 <= lie_rank g - 2 * j) as H1.
+                    { omega. }
+                    destruct (le_lt_eq_dec _ _ H1) as [H2|H2].
+                    - set (t := lie_rank g - 2 * j) in *.
+                      destruct t as [|[|]] ; try omega.
+                      contradiction (Hconsneq _ _ H).
+                    - rewrite <- H2 in *.
+                      destruct HnOdd as [n2 Hn2].
+                      simpl lie_rank in H2.
+                      rewrite Hn2 in H2.
+                      clear -H2.
+                      omega.
+                  }
+                  {
+                    rewrite <- H0, Nat.sub_diag in *.
+                    simpl in H.
+                    rewrite (thm_cons_eq_repeat _ _ _ _ _ H), <- Z.even_spec, Z.even_1 in Ha'Even.
+                    discriminate Ha'Even.
+                  }
+                + destruct HbEven as [b2 Hb2].
+                  unfold b' in H.
+                  rewrite Hb2 in H.
+                  destruct n ;
+                  simpl repeat in H;
+                  simpl app in H ;
+                  rewrite list_eq_iff_hd_tl, list_eq_iff_hd_tl in H ;
+                  destruct H as [_ [H _]] ;
+                  omega.
+                + destruct H as [m [H3m H]].
+                  contradiction (Hconsneq _ _ H).
+                + contradiction (Hconsneq _ _ H).
+                + contradiction (Hconsneq _ _ H).
+              - clear ; tac_length.
+              - unfold mu.
+                rewrite thm_Zvec_sub_add_const.
+                simpl (- -1)%Z.
+                rewrite Hlen.
+                unfold lie_is_radical_revwt_alg, g, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank.
+                autorewrite with rewritesome.
+                repeat split.
+                + clear ; tac_length.
+                + refine (thm_Zvec_nondecb_join _ _ _ _).
+                  simpl ; omega.
+                  refine (thm_Zvec_nondecb_repeat _ _).
+                + rewrite thm_Zvec_total_repeat, thm_Z_of_nat_S, thm_Z_of_nat_S, thm_Z_of_nat_S, Z.mul_1_r.
+                  autorewrite with rewriteeven.
+                  rewrite thm_Z_of_nat_even.
+                  rewrite <- Nat.odd_spec in HnOdd.
+                  rewrite <- Nat.negb_odd, HnOdd.
+                  trivial.
+            }
+          }
+          {
+            exact (thm_main_C_hd_odd_odd
+                     n Hn1 a b lambda Hradg Hn
+                     IHnHn Hhtype Hgtype Hrank H0a Hahd HaOdd Hlen HbOdd).
+          }
         }
   Admitted.
 End main.
