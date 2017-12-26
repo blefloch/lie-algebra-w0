@@ -18,6 +18,7 @@ multiples of fundamental weights are exceptional, and for a finite
 number of λ we compute by hand that they are mixed.  Starting from this
 seed data, the Coq code being developped in this repository performs the
 case-by-case analysis proving that all other radical weights are mixed.
+Currently this is complete for A-type and C-type simple Lie algebras.
 
 To compile, run
 
