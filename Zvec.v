@@ -114,7 +114,22 @@ Section Zhelpers.
   Qed.
 End Zhelpers.
 
-Section Zeven.
+Section even.
+  Theorem thm_Odd_even_false :
+    forall n, Nat.Odd n -> Nat.even n = false.
+  Proof.
+    intros n H.
+    rewrite <- Nat.odd_spec in H.
+    rewrite <- Nat.negb_odd, H.
+    trivial.
+  Qed.
+  Theorem thm_mul_2_l_even : forall n, Nat.even (2 * n) = true.
+  Proof.
+    intros n.
+    rewrite Nat.even_spec.
+    exists n.
+    intuition.
+  Qed.
   Theorem thm_Z_even_pos :
     forall a, Z.even a = true -> (0 < a)%Z -> (2 <= a)%Z.
   Proof.
@@ -165,7 +180,29 @@ Section Zeven.
     rewrite Z.mul_comm.
     exact (thm_Zeven_mul_2_l _).
   Qed.
-End Zeven.
+  Theorem thm_even_between_0_and_2 :
+    forall a, Z.Even a -> (0 <= a)%Z -> (a <= 2)%Z -> a = 0%Z \/ a = 2%Z.
+  Proof.
+    intros a HaEven Hamin Hamax.
+    destruct HaEven as [a2 Ha2].
+    rewrite Ha2 in *.
+    assert (0 <= a2 <= 1)%Z as H3.
+    { omega. }
+    rewrite Z.lt_eq_cases, Z.lt_eq_cases in H3.
+    destruct H3 as [[H3|H3] [H4|H4]].
+    all : try omega.
+  Qed.
+  Theorem thm_Z_of_nat_even :
+    forall n, Z.even (Z.of_nat n) = Nat.even n.
+  Proof.
+    induction n.
+    - trivial.
+    - rewrite Nat.even_succ, <- Nat.negb_even, <- IHn.
+      refine (negb_sym _ _ _).
+      rewrite Z.negb_even, <- Z.odd_succ, Nat2Z.inj_succ.
+      trivial.
+  Qed.
+End even.
 
 Hint Rewrite
      Z.even_add
@@ -188,6 +225,15 @@ Section misc.
     induction l.
     - trivial.
     - simpl ; rewrite IHl ; firstorder.
+  Qed.
+  Theorem thm_Zvec_mul_1 :
+    forall lambda, Zvec_mul 1 lambda = lambda.
+  Proof.
+    induction lambda.
+    - trivial.
+    - unfold Zvec_mul, map in *.
+      rewrite Z.mul_1_l, IHlambda.
+      trivial.
   Qed.
   Theorem thm_Zvec_eqb_eq :
     forall lambda mu,
@@ -226,6 +272,31 @@ Section misc.
     simpl.
     rewrite Bool.andb_true_iff, Z.even_sub.
     exact (conj (eqb_reflx _) IHmu).
+  Qed.
+  Theorem thm_Zvec_sub_add_const :
+    forall nu t,
+      Zvec_short_sub (nu) (map (Z.add t) nu)
+      = repeat (-t)%Z (length nu).
+  Proof.
+    intros nu t.
+    unfold Zvec_short_sub.
+    induction nu.
+    - trivial.
+    - simpl.
+      rewrite IHnu, Z.add_comm, Z.sub_add_distr, Z.sub_diag, Z.sub_0_l.
+      trivial.
+  Qed.
+  Theorem thm_Zvec_sub_add_const2 :
+    forall a nu t,
+      Zvec_short_sub (a::nu) (a::map (Z.add t) nu)
+      = 0%Z::repeat (-t)%Z (length nu).
+  Proof.
+    intros a nu t.
+    rewrite <- thm_Zvec_sub_add_const.
+    unfold Zvec_short_sub.
+    simpl.
+    rewrite Z.sub_diag.
+    trivial.
   Qed.
 End misc.
 
@@ -343,6 +414,16 @@ Section leb.
     all : autorewrite with rewritesome in *.
     all : try (apply IHn ; try omega).
     all : firstorder.
+  Qed.
+  Theorem thm_Zleb_add_const :
+    forall a b c, (a + b <=? a + c)%Z = (b <=? c)%Z.
+  Proof.
+    intros a b c.
+    destruct (Sumbool.sumbool_of_bool (b <=? c)%Z) as [H|H] ;
+      rewrite H.
+    - exact (Zle_bool_plus_mono _ _ _ _ (Z.leb_refl _) H).
+    - rewrite Z.leb_gt in *.
+      exact (Zplus_lt_compat_l _ _ _ H).
   Qed.
 End leb.
 
@@ -645,6 +726,20 @@ Section nondecb.
     rewrite list_eq_iff_hd_tl.
     exact (conj (Z.max_r _ _ (thm_Zvec_nondecb_01_geq _ _ _ H)) eq_refl).
   Qed.
+  Theorem thm_Zvec_nondecb_plus_constant :
+    forall a lambda,
+      Zvec_nondecb (map (Z.add a) lambda)
+      = Zvec_nondecb lambda.
+  Proof.
+    induction lambda.
+    - trivial.
+    - destruct lambda.
+      + trivial.
+      + unfold Zvec_nondecb in *.
+        simpl in *.
+        rewrite IHlambda, thm_Zleb_add_const.
+        trivial.
+  Qed.
 End nondecb.
 
 Section total.
@@ -699,6 +794,19 @@ Section total.
     pose (H1 := IHlambda mu H0).
     unfold Zvec_short_sub in H1.
     omega.
+  Qed.
+  Theorem thm_Zvec_total_plus_constant :
+    forall a lambda,
+      Zvec_total (map (Z.add a) lambda)
+      = (Zvec_total lambda + a * Z.of_nat (length lambda))%Z.
+  Proof.
+    induction lambda.
+    - compute ; destruct a ; trivial.
+    - simpl length in *.
+      simpl map in *.
+      simpl Zvec_total in *.
+      rewrite thm_Z_of_nat_S, IHlambda.
+      ring.
   Qed.
 End total.
 
