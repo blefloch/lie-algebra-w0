@@ -32,7 +32,7 @@ Section generalities.
     forall (g : lie_algebra) (lambda : list Z),
       lie_algebra_type g = lie_C_type
       -> lie_is_radical_revwt_alg g lambda = true
-      -> Z.even (Zvec_total lambda) = true.
+      -> Z.even (total lambda) = true.
   Proof.
     intros g lambda Hgtype Hrad.
     destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
@@ -416,7 +416,7 @@ Section reduction.
       + refine (thm_Zvec_nondecb_cons _ _ (thm_Zvec_nondecb_cons _ _ H0)).
     - rewrite H3, H4 in H1.
       autorewrite with rewriteeven in H1.
-      destruct (Z.even (Zvec_total mu)) ; compute in H1 ; trivial ; discriminate.
+      destruct (Z.even (total mu)) ; compute in H1 ; trivial ; discriminate.
   Qed.
   Theorem thm_reduction2 :
     forall g h,
@@ -453,7 +453,7 @@ Section reduction.
     }
     assert ((0 <=? hd 0 (mun1 :: mun :: mu))%Z = true).
     { rewrite Z.leb_le ; assumption. }
-    assert (Z.even (Zvec_total (mun1 :: mun :: mu)) = true).
+    assert (Z.even (total (mun1 :: mun :: mu)) = true).
     {
       simpl.
       rewrite Ha, Hb.
@@ -572,7 +572,7 @@ Section C12.
     pose (Hlen := thm_radical_length _ _ Hrad).
     clearbody Hlen.
     destruct lambda as [|a [|b [|]]] ; simpl in Hlen ; try omega.
-    unfold lie_is_radical_revwt_alg, lie_algebra_type, g, lie_is_radical_revwt_type, Zvec_nondecb, Zvec_total in Hrad.
+    unfold lie_is_radical_revwt_alg, lie_algebra_type, g, lie_is_radical_revwt_type, Zvec_nondecb, total in Hrad.
     simpl in *.
     repeat rewrite andb_true_iff in *.
     repeat rewrite Z.leb_le in *.
@@ -1014,12 +1014,12 @@ Section main.
                     refine (thm_Zvec_nondecb_cons a (b::lambda) _).
                     tauto.
                   - assumption.
-                  - unfold Zvec_total.
-                    unfold Zvec_total in Hradg.
-                    fold (Zvec_total (b'::lambda')).
-                    fold (Zvec_total (b::lambda)) in Hradg.
+                  - unfold total.
+                    unfold total in Hradg.
+                    fold (total (b'::lambda')).
+                    fold (total (b::lambda)) in Hradg.
                     destruct Hradg as [Hlen2 [[Hinc2 H0a2] Heven]].
-                    rewrite Hval', thm_Zvec_total_plus_constant, Z.add_assoc, Z.even_add, Heven, Z.even_mul, thm_Z_of_nat_even.
+                    rewrite Hval', thm_total_plus_constant, Z.add_assoc, Z.even_add, Heven, Z.even_mul, thm_Z_of_nat_even.
                     simpl.
                     rewrite <- Nat.even_spec in HnEven.
                     rewrite Hlen2, HnEven.
@@ -1074,8 +1074,8 @@ Section main.
                 repeat split.
                 + tac_length.
                 + tac_nondecb.
-                + unfold Zvec_total ; fold Zvec_total.
-                  rewrite thm_Zvec_total_repeat, Z.add_0_l, Z.mul_1_r, thm_Z_of_nat_even.
+                + unfold total ; fold total.
+                  rewrite thm_total_repeat, Z.add_0_l, Z.mul_1_r, thm_Z_of_nat_even.
                   destruct HnEven as [n2 Hn2].
                   rewrite Hn2 in Hlen.
                   simpl length ; rewrite Hlen.
@@ -1110,14 +1110,14 @@ Section main.
                     rewrite thm_Zvec_nondecb_plus_constant.
                     tauto.
                   - assumption.
-                  - unfold Zvec_total.
-                    unfold Zvec_total in Hradg.
-                    fold (Zvec_total (a'::b'::lambda')).
-                    fold (Zvec_total (a::b::lambda)) in Hradg.
+                  - unfold total.
+                    unfold total in Hradg.
+                    fold (total (a'::b'::lambda')).
+                    fold (total (a::b::lambda)) in Hradg.
                     rewrite <- Hmuval.
                     unfold mu.
                     destruct Hradg as [Hlen2 [[Hinc2 H0a2] Heven]].
-                    rewrite thm_Zvec_total_plus_constant, Hlen, Z.even_add, Heven.
+                    rewrite thm_total_plus_constant, Hlen, Z.even_add, Heven.
                     unfold lie_embedding_dim, g, lie_rank.
                     rewrite Z.even_mul.
                     repeat rewrite thm_Z_of_nat_S.
@@ -1213,7 +1213,7 @@ Section main.
                 + refine (thm_Zvec_nondecb_join _ _ _ _).
                   simpl ; omega.
                   refine (thm_Zvec_nondecb_repeat _ _).
-                + rewrite thm_Zvec_total_repeat, thm_Z_of_nat_S, thm_Z_of_nat_S, thm_Z_of_nat_S, Z.mul_1_r.
+                + rewrite thm_total_repeat, thm_Z_of_nat_S, thm_Z_of_nat_S, thm_Z_of_nat_S, Z.mul_1_r.
                   autorewrite with rewriteeven.
                   rewrite thm_Z_of_nat_even.
                   rewrite <- Nat.odd_spec in HnOdd.

@@ -84,7 +84,7 @@ Section lie.
     end.
   Definition lie_is_dominant_wt_type type mu :=
     match type with
-      | lie_A_type => (Zvec_nonincb mu) && (Zvec_total mu =? 0)%Z
+      | lie_A_type => (Zvec_nonincb mu) && (total mu =? 0)%Z
       | lie_B_type => (Zvec_nonincb mu) && (0 <=? last mu 0)%Z
       | lie_C_type => (Zvec_nonincb mu) && (0 <=? last mu 0)%Z
       | lie_D_type => (Zvec_nonincb mu) && (- last mu 0 <=? last (removelast mu) 0)%Z
@@ -99,11 +99,11 @@ Section lie.
       && (lie_is_dominant_wt_type (lie_algebra_type g) mu).
   Definition lie_is_radical_wt_type type mu :=
     match type with
-      | lie_A_type => (Zvec_nonincb mu) && (Zvec_total mu =? 0)%Z
+      | lie_A_type => (Zvec_nonincb mu) && (total mu =? 0)%Z
       | lie_B_type => (Zvec_nonincb mu) && (0 <=? last mu 0)%Z
-      | lie_C_type => (Zvec_nonincb mu) && (0 <=? last mu 0)%Z && (Z.even (Zvec_total mu))
+      | lie_C_type => (Zvec_nonincb mu) && (0 <=? last mu 0)%Z && (Z.even (total mu))
       | lie_D_type => (Zvec_nonincb mu) && (- last mu 0 <=? last (removelast mu) 0)%Z
-                                        && (Z.even (Zvec_total mu))
+                                        && (Z.even (total mu))
       | lie_E6_type => match mu with
                          | a1::a2::a3::a4::a5::a6::nil
                            => (Zvec_all_nonnegb mu)
@@ -162,7 +162,7 @@ Section lie.
   (*revwt stands for reversed weight*)
   Definition lie_is_dominant_revwt_type type mu :=
     match type with
-      | lie_A_type => (Zvec_nondecb mu) && (Zvec_total mu =? 0)%Z
+      | lie_A_type => (Zvec_nondecb mu) && (total mu =? 0)%Z
       | lie_B_type => (Zvec_nondecb mu) && (0 <=? hd 0 mu)%Z
       | lie_C_type => (Zvec_nondecb mu) && (0 <=? hd 0 mu)%Z
       | lie_D_type => (Zvec_nondecb mu) && (- hd 0 mu <=? hd 0 (tl mu))%Z
@@ -177,11 +177,11 @@ Section lie.
       && (lie_is_dominant_revwt_type (lie_algebra_type g) mu).
   Definition lie_is_radical_revwt_type type mu :=
     match type with
-      | lie_A_type => (Zvec_nondecb mu) && (Zvec_total mu =? 0)%Z
+      | lie_A_type => (Zvec_nondecb mu) && (total mu =? 0)%Z
       | lie_B_type => (Zvec_nondecb mu) && (0 <=? hd 0 mu)%Z
-      | lie_C_type => (Zvec_nondecb mu) && (0 <=? hd 0 mu)%Z && (Z.even (Zvec_total mu))
+      | lie_C_type => (Zvec_nondecb mu) && (0 <=? hd 0 mu)%Z && (Z.even (total mu))
       | lie_D_type => (Zvec_nondecb mu) && (- hd 0 mu <=? hd 0 (tl mu))%Z
-                                        && (Z.even (Zvec_total mu))
+                                        && (Z.even (total mu))
       | lie_E6_type => match mu with
                          | a6::a5::a4::a3::a2::a1::nil
                            => (Zvec_all_nonnegb mu)

@@ -53,7 +53,7 @@ Section radical_dominant.
     all : unfold lie_is_radical_revwt_alg, lie_embedding_dim,
           lie_rank, lie_algebra_type, lie_is_radical_revwt_type.
     all : repeat rewrite thm_Zvec_nondecb_repeat.
-    all : repeat rewrite thm_Zvec_total_repeat.
+    all : repeat rewrite thm_total_repeat.
     all : repeat rewrite repeat_length.
     all : repeat rewrite tl_repeat.
     all : repeat rewrite Z.mul_0_r.
@@ -212,7 +212,7 @@ Section radical_dominant.
                    rewrite <- Nat.negb_even, negb_true_iff in H2 ;
                    rewrite H2 ;
                    clear H2).
-        all : unfold Zvec_total ; fold Zvec_total.
+        all : unfold total ; fold total.
         all : autorewrite with rewritetotal.
         all : destruct H as [u Hu].
         all : rewrite Hu.
@@ -294,9 +294,9 @@ Section mixed.
                        | [H : (_ =? _)%nat = true |- _ ] => rewrite Nat.eqb_eq in *
                        | [ |- (_ =? _)%nat = true ] => rewrite Nat.eqb_eq in *
                        | [H : length ?lambda = length ?mu
-                          |- context [Zvec_total ?lambda] ]
-                         => rewrite (thm_Zvec_total_from_sub lambda mu H)
-                       | [H : Zvec_total ?mu = _ |- context[Zvec_total ?mu] ]
+                          |- context [total ?lambda] ]
+                         => rewrite (thm_total_from_sub lambda mu H)
+                       | [H : total ?mu = _ |- context[total ?mu] ]
                          => rewrite H ; intuition
                        | [H : (_ <=? _)%Z = true |- _ ] => rewrite Z.leb_le in *
                        | [ |- (_ <=? _)%Z = true ] => rewrite Z.leb_le in *

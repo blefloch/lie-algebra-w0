@@ -181,7 +181,7 @@ Section branchof.
     end.
   Definition branchof (lambda : list Z) :=
     let mu := tl (tl lambda) in
-    getnthpred lambda mu (Z.abs_nat (Zvec_total mu)).
+    getnthpred lambda mu (Z.abs_nat (total mu)).
   Theorem thm_A_pred_length0 :
     forall lambda0 mu0, length (getpred lambda0 mu0) <= length mu0.
   Proof.
@@ -239,7 +239,7 @@ Section branchof.
       Zvec_short_allb Z.leb lambda0 mu0 = true
       -> length mu0 <= length lambda0
       -> Zvec_short_allb Z.eqb lambda0 mu0 = false
-      -> Zvec_total (getpred lambda0 mu0) = (Zvec_total mu0 - 1)%Z.
+      -> total (getpred lambda0 mu0) = (total mu0 - 1)%Z.
   Proof.
     intros lambda0 mu0.
     generalize lambda0 as lambda1.
@@ -353,42 +353,42 @@ Section branchof.
   Theorem thm_branchof_total :
     forall lambda,
       (lie_is_radical_revwt_type lie_A_type lambda) = true
-      -> (Zvec_total (branchof lambda) = 0)%Z.
+      -> (total (branchof lambda) = 0)%Z.
   Proof.
     intros lambda Hrad.
     destruct lambda as [|a [|b lambda2]] ; simpl ; trivial.    
     unfold lie_is_radical_revwt_type in Hrad.
     simpl_destruct Hrad as [Hinc Htot].
     unfold branchof, tl.
-    assert (Zvec_total lambda2 >= 0)%Z.
+    assert (total lambda2 >= 0)%Z.
     {
       pose (H := thm_Zvec_nondecb_total_app (a::b::nil) lambda2).
       unfold app in H.
       firstorder.
     }
-    set (n := Z.abs_nat (Zvec_total lambda2)).
-    assert (Z.of_nat n = Zvec_total lambda2)%Z as H0.
+    set (n := Z.abs_nat (total lambda2)).
+    assert (Z.of_nat n = total lambda2)%Z as H0.
     {
       unfold n.
-      rewrite (Zabs2Nat.id_abs (Zvec_total lambda2)).
+      rewrite (Zabs2Nat.id_abs (total lambda2)).
       rewrite Z.ge_le_iff in H.
       exact (Z.abs_eq _ H).
     }
     assert (forall m,
-              Z.of_nat m <= Zvec_total lambda2
-              -> Zvec_total (getnthpred (a :: b :: lambda2) lambda2 m)
-                 = Zvec_total lambda2 - Z.of_nat m)%Z as H1.
+              Z.of_nat m <= total lambda2
+              -> total (getnthpred (a :: b :: lambda2) lambda2 m)
+                 = total lambda2 - Z.of_nat m)%Z as H1.
     {
       set (lambda := (a::b::lambda2)).
       induction m.
       - simpl ; firstorder.
       - intros H1.
         rewrite thm_Z_of_nat_S in H1.
-        assert (Z.of_nat m <= Zvec_total lambda2)%Z as Htmp.
+        assert (Z.of_nat m <= total lambda2)%Z as Htmp.
         { omega. }
         pose (H2 := IHm Htmp). clearbody H2. clear Htmp IHm.
-        cut (Zvec_total (getnthpred lambda lambda2 (S m))
-             = Zvec_total (getnthpred lambda lambda2 m) - 1)%Z.
+        cut (total (getnthpred lambda lambda2 (S m))
+             = total (getnthpred lambda lambda2 m) - 1)%Z.
         {
           intros H4.
           rewrite H4.
@@ -498,7 +498,7 @@ Section branchof.
     - firstorder.
     - firstorder.
     - unfold branchof, tl.
-      set (n := Z.abs_nat (Zvec_total lambda2)).
+      set (n := Z.abs_nat (total lambda2)).
       intros H.
       generalize n as p.
       induction p.
@@ -532,7 +532,7 @@ Section branchof.
       autorewrite with rewritesome in Hrad.
       firstorder.
     - unfold branchof, tl.
-      set (n := Z.abs_nat (Zvec_total lambda)).
+      set (n := Z.abs_nat (total lambda)).
       generalize n as n0.
       induction n0.
       + apply thm_Zvec_leb_refl.
@@ -604,30 +604,30 @@ Section exceptional_structure.
       lie_algebra_type g = lie_A_type
       -> forall lambda,
            Is_exceptional_revwt_alg g lambda
-           -> Zvec_total lambda = 0%Z.
+           -> total lambda = 0%Z.
   Proof.
     intros g Hgtype lambda [i [m [H H0]]].
     destruct g as [[n Hn]| | | | | | | | ] ;
       try (simpl in Hgtype; discriminate Hgtype).
     rewrite H0.
-    rewrite thm_Zvec_total_mul.
+    rewrite thm_total_mul.
     unfold lie_radical_fundamental_revwt_alg, lie_embedding_dim, lie_rank.
     destruct_bool (n <? i) Hni.
     - rewrite orb_true_r.
       simpl.
-      rewrite thm_Zvec_total_repeat, Zmult_0_r, Zmult_0_r.
+      rewrite thm_total_repeat, Zmult_0_r, Zmult_0_r.
       trivial.
     - destruct_bool (i =? 0) Hi.
       + rewrite orb_true_l.
         simpl.
-        rewrite thm_Zvec_total_repeat, Zmult_0_r, Zmult_0_r.
+        rewrite thm_total_repeat, Zmult_0_r, Zmult_0_r.
         trivial.
       + assert (forall x y : list Z, (if false || false then x else y) = y) as H1.
         { trivial. }
         rewrite H1.
-        rewrite thm_Zvec_total_app.
-        rewrite thm_Zvec_total_repeat.
-        rewrite thm_Zvec_total_repeat.
+        rewrite thm_total_app.
+        rewrite thm_total_repeat.
+        rewrite thm_total_repeat.
         rewrite Nat.ltb_ge in Hni.
         assert (i <= S n) as H2.
         { omega. }
@@ -693,8 +693,8 @@ Section exceptional_structure.
     destruct (thm_A_exceptional_repeat2 g Hgtype lambda Hexc)
       as [a [b [p [q [Hab Hlambda]]]]].
     pose (Htot := thm_A_exceptional_total g Hgtype lambda Hexc).
-    rewrite Hlambda, thm_Zvec_total_app,
-      thm_Zvec_total_repeat, thm_Zvec_total_repeat in Htot.
+    rewrite Hlambda, thm_total_app,
+      thm_total_repeat, thm_total_repeat in Htot.
     assert (0 <= Z.of_nat p)%Z as Hp.
     { clear. omega. }
     assert (0 <= Z.of_nat q)%Z as Hq.
@@ -1104,7 +1104,7 @@ Section repeat2_branching.
       rewrite Hnsplit.
       exact (Min.min_l _ _ Hq4).
     }
-    rewrite (app_nil_end (repeat b (q - 2))) in Hlm2.
+    rewrite <- (app_nil_r (repeat b (q - 2))) in Hlm2.
     rewrite (thm_Zvec_leb_app _ _ _ _ Hrholength) in Hlm2.
     destruct Hlm2 as [Hlm1 Hlm2].
     rewrite (thm_Zvec_leb_app _ _ _ _ (eq_sym Hrholength)) in Hml2.
@@ -1186,7 +1186,7 @@ Section du_radical.
                 => (destruct p ; simpl ; firstorder) (*Possibly dangerous loop?*)
               | [ |- context[match ?p with 0 => _ | S _ => _ end]]
                 => (destruct p ; simpl ; firstorder)
-              | [ Htot : context[Zvec_total] |- context[Zvec_total]]
+              | [ Htot : context[total] |- context[total]]
                 => (simpl_total ; simpl_total in Htot ; try omega)
               | [ |- _] => (simpl ; try omega ; firstorder)
             end).
@@ -1718,8 +1718,8 @@ Section du_main.
       all : try rewrite Hlength3 in *.
       all : try omega.
       destruct (thm_Zvec_nondecb_app _ _ Hincl) as [Hinchd Hinctl].
-      assert (Zvec_total (hdn (2 + p) lambda)
-              <= Zvec_total (repeat a (2 + p)))%Z as H3.
+      assert (total (hdn (2 + p) lambda)
+              <= total (repeat a (2 + p)))%Z as H3.
       {
         refine (thm_Zvec_leb_total_same_length _ _ _ _).
         - autorewrite with rewritelength.
@@ -1732,8 +1732,8 @@ Section du_main.
           rewrite <- Hlength3 at 2.
           exact (thm_Zvec_nondecb_last_leb2 _ _ H0 Hinchd).
       }
-      assert (Zvec_total (tln (2 + p) lambda)
-              <= Zvec_total (repeat b q))%Z as H4.
+      assert (total (tln (2 + p) lambda)
+              <= total (repeat b q))%Z as H4.
       {
         refine (thm_Zvec_leb_total_same_length _ _ _ _).
         - autorewrite with rewritelength.
@@ -1744,7 +1744,7 @@ Section du_main.
           rewrite <- Hlength4.
           exact (thm_Zvec_nondecb_last_leb2 _ _ H1 Hinctl).
       }
-      rewrite Hlambdaval, thm_Zvec_total_app in Htotl.
+      rewrite Hlambdaval, thm_total_app in Htotl.
       pose (H5 := Z.add_le_mono _ _ _ _ H3 H4).
       rewrite Htotl in H5.
       simpl_total in Htotm.

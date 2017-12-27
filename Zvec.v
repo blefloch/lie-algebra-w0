@@ -12,15 +12,10 @@ Open Scope nat_scope.
 (*TODO: look up "fold"*)
 
 Section functions.
-  Fixpoint Zvec_total lambda :=
+  Fixpoint total lambda :=
     match lambda with
       | nil => 0%Z
-      | a::lambda' => (a + Zvec_total lambda')%Z
-    end.
-  Fixpoint Zvec_allb (testb : Z -> bool) lambda :=
-    match lambda with
-      | nil => true
-      | a::lambda' => (testb a) && (Zvec_allb testb lambda')
+      | a::lambda' => (a + total lambda')%Z
     end.
   Fixpoint Zvec_short_allb (testb : Z -> Z -> bool) lambda mu :=
     match lambda with
@@ -53,7 +48,7 @@ Section functions.
   Definition Zvec_long_min := Zvec_long_map_zip Z.min.
   Definition Zvec_nondecb lambda := Zvec_short_allb Z.leb lambda (tl lambda).
   Definition Zvec_nonincb lambda := Zvec_short_allb Z.leb (tl lambda) lambda.
-  Definition Zvec_all_nonnegb := Zvec_allb (Z.leb 0).
+  Definition Zvec_all_nonnegb := forallb (Z.leb 0).
 End functions.
 
 Section Zhelpers.
@@ -737,10 +732,10 @@ Section nondecb.
 End nondecb.
 
 Section total.
-  Theorem thm_Zvec_total_app :
+  Theorem thm_total_app :
     forall lambda mu,
-      Zvec_total (lambda++mu)
-      = (Zvec_total lambda + Zvec_total mu)%Z.
+      total (lambda++mu)
+      = (total lambda + total mu)%Z.
   Proof.
     induction lambda ; simpl.
     - trivial.
@@ -748,9 +743,9 @@ Section total.
       rewrite (IHlambda mu).
       exact (Zplus_assoc _ _ _).
   Qed.
-  Theorem thm_Zvec_total_mul :
+  Theorem thm_total_mul :
     forall m lambda,
-      (Zvec_total (Zvec_mul m lambda) = m * Zvec_total lambda)%Z.
+      (total (Zvec_mul m lambda) = m * total lambda)%Z.
   Proof.
     unfold Zvec_mul.
     induction lambda ; simpl.
@@ -759,25 +754,25 @@ Section total.
       rewrite Z.mul_add_distr_l.
       trivial.
   Qed.
-  Theorem thm_Zvec_total_repeat :
+  Theorem thm_total_repeat :
     forall m a,
-      (Zvec_total (repeat a m) = (Z.of_nat m) * a)%Z.
+      (total (repeat a m) = (Z.of_nat m) * a)%Z.
   Proof.
     intros.
     induction m.
     - trivial.
     - simpl repeat.
-      simpl Zvec_total.
+      simpl total.
       rewrite IHm, thm_Z_of_nat_S.
       rewrite Z.mul_add_distr_r.
       omega.
   Qed.
-  Theorem thm_Zvec_total_from_sub :
+  Theorem thm_total_from_sub :
     forall lambda mu,
       length lambda = length mu
-      -> (Zvec_total lambda
-          = Zvec_total (Zvec_short_sub lambda mu)
-            + Zvec_total mu)%Z.
+      -> (total lambda
+          = total (Zvec_short_sub lambda mu)
+            + total mu)%Z.
   Proof.
     induction lambda.
     all : destruct mu.
@@ -789,16 +784,16 @@ Section total.
     unfold Zvec_short_sub in H1.
     omega.
   Qed.
-  Theorem thm_Zvec_total_plus_constant :
+  Theorem thm_total_plus_constant :
     forall a lambda,
-      Zvec_total (map (Z.add a) lambda)
-      = (Zvec_total lambda + a * Z.of_nat (length lambda))%Z.
+      total (map (Z.add a) lambda)
+      = (total lambda + a * Z.of_nat (length lambda))%Z.
   Proof.
     induction lambda.
     - compute ; destruct a ; trivial.
     - simpl length in *.
       simpl map in *.
-      simpl Zvec_total in *.
+      simpl total in *.
       rewrite thm_Z_of_nat_S, IHlambda.
       ring.
   Qed.
@@ -809,7 +804,7 @@ Section leb_nondecb.
     forall a b lambda,
       (0 <= b)%Z
       -> Zvec_nondecb (a::b::lambda) = true
-      -> Zvec_allb (Z.leb 0%Z) lambda = true.
+      -> forallb (Z.leb 0%Z) lambda = true.
   Proof.
     unfold Zvec_nondecb.
     simpl.
@@ -866,7 +861,7 @@ Section leb_nondecb.
                          (repeat a (1 + length lambda)) = true.
   Proof.
     intros lambda a H.
-    assert (Zvec_allb (Z.geb a) lambda = true) as H0.
+    assert (forallb (Z.geb a) lambda = true) as H0.
     {
       induction lambda.
       - trivial.
@@ -924,8 +919,8 @@ Section leb_total.
     forall mu lambda,
       length mu <= length lambda
       -> Zvec_short_allb Z.leb lambda mu = true
-      -> (Zvec_total (hdn (length mu) lambda)
-          <= Zvec_total mu)%Z.
+      -> (total (hdn (length mu) lambda)
+          <= total mu)%Z.
   Proof.
     induction mu.
     - simpl ; firstorder.
@@ -942,8 +937,8 @@ Section leb_total.
       length mu <= length lambda
       -> Zvec_short_allb Z.leb lambda mu = true
       -> (Zvec_short_allb Z.eqb lambda mu = true
-          <-> Zvec_total mu
-              = Zvec_total (hdn (length mu) lambda)).
+          <-> total mu
+              = total (hdn (length mu) lambda)).
   Proof.
     intros lambda mu Hlength Hleb.
     split.
@@ -976,7 +971,7 @@ Section leb_total.
     forall lambda mu : list Z,
       length lambda = length mu
       -> Zvec_short_allb Z.leb lambda mu = true
-      -> Zvec_total lambda = Zvec_total mu <-> lambda = mu.
+      -> total lambda = total mu <-> lambda = mu.
   Proof.
     intros lambda mu Hlength Hleb.
     assert (length mu <= length lambda) as Hlength2.
@@ -992,7 +987,7 @@ Section leb_total.
     forall mu lambda,
       length mu = length lambda
       -> Zvec_short_allb Z.leb lambda mu = true
-      -> (Zvec_total lambda <= Zvec_total mu)%Z.
+      -> (total lambda <= total mu)%Z.
   Proof.
     induction mu.
     - destruct lambda.
@@ -1011,12 +1006,12 @@ Section nondecb_total.
   Theorem thm_Zvec_nondecb_total_app :
     forall lambda mu,
       Zvec_nondecb (lambda++mu) = true
-      -> Zvec_total (lambda++mu) = 0%Z
-      -> (Zvec_total lambda <= 0)%Z
-         /\ (Zvec_total mu >= 0)%Z.
+      -> total (lambda++mu) = 0%Z
+      -> (total lambda <= 0)%Z
+         /\ (total mu >= 0)%Z.
   Proof.
     intros lambda mu H Htot.
-    assert (Zvec_total lambda <= 0 \/ 0 <= Zvec_total mu)%Z as Hor.
+    assert (total lambda <= 0 \/ 0 <= total mu)%Z as Hor.
     {
       pose (H0 := thm_Zvec_nondecb_app _ _ H).
       destruct H0 as [H0 H1].
@@ -1024,7 +1019,7 @@ Section nondecb_total.
       - right ; firstorder.
       - destruct (Z_lt_le_dec a 0) as [H2|H2].
         + left.
-          assert (Zvec_allb (Z.gtb 0) lambda = true) as H3.
+          assert (forallb (Z.gtb 0) lambda = true) as H3.
           {
             generalize lambda as lambda0, H.
             induction lambda0.
@@ -1039,8 +1034,8 @@ Section nondecb_total.
               trivial.
           }
           assert (forall lambda0,
-                    Zvec_allb (Z.gtb 0) lambda0 = true
-                    -> Zvec_total lambda0 <= 0)%Z as H4.
+                    forallb (Z.gtb 0) lambda0 = true
+                    -> total lambda0 <= 0)%Z as H4.
           {
             induction lambda0.
             - simpl ; firstorder.
@@ -1053,7 +1048,7 @@ Section nondecb_total.
         + right.
           generalize mu as mu0, a as a0, H2, H1.
           induction mu0.
-          * unfold Zvec_total ; simpl ; firstorder.
+          * unfold total ; simpl ; firstorder.
           * intros a1 Ha1 H3.
             pose (H4 := thm_Zvec_nondecb_cons _ _ H3).
             clearbody H4.
@@ -1064,14 +1059,14 @@ Section nondecb_total.
             pose (H5 := (IHmu0 _ (Z.le_trans _ _ _ Ha1 Ha10) H4)).
             omega.
     }
-    rewrite (thm_Zvec_total_app _ _) in Htot.
+    rewrite (thm_total_app _ _) in Htot.
     destruct Hor as [H0|H0] ; omega.
   Qed.
   Theorem thm_Zvec_nondecb_partialsum :
     (forall lambda p,
        Zvec_nondecb lambda = true
-       -> Zvec_total lambda = 0
-       -> Zvec_total (hdn p lambda) <= 0)%Z.
+       -> total lambda = 0
+       -> total (hdn p lambda) <= 0)%Z.
   Proof.
     intros lambda p Hinc Htot.
     pose (Hval := app_hdn_tln _ p lambda).
@@ -1083,14 +1078,14 @@ Section nondecb_total.
     forall a b lambda,
       (0 <= b)%Z
       -> Zvec_nondecb (a::b::lambda) = true
-      -> (Zvec_total lambda >= 0)%Z.
+      -> (total lambda >= 0)%Z.
   Proof.
     unfold Zvec_nondecb.
     simpl.
     intros a b lambda H1 H2.
     generalize lambda as lambda0, (thm_Zvec_nondecb_fact1 a b lambda H1 H2).
     induction lambda0.
-    - unfold Zvec_total ; firstorder.
+    - unfold total ; firstorder.
     - simpl_extra.
       firstorder.
   Qed.
@@ -1124,8 +1119,8 @@ Tactic Notation "tac_nondecb" :=
               end).
 
 Hint Rewrite
-     thm_Zvec_total_app
-     thm_Zvec_total_repeat
+     thm_total_app
+     thm_total_repeat
      thm_Z_of_nat_S
      Z.mul_add_distr_r
      Z.add_assoc
