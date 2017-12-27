@@ -631,23 +631,23 @@ Section nondecb.
         * assumption.
         * assumption.
   Qed.
-  Theorem thm_Zvec_nondecb_hdn :
+  Theorem thm_Zvec_nondecb_firstn :
     forall p lambda,
       Zvec_nondecb lambda = true
-      -> Zvec_nondecb (hdn p lambda) = true.
+      -> Zvec_nondecb (firstn p lambda) = true.
   Proof.
     intros.
-    rewrite (app_hdn_tln _ p lambda) in H.
+    rewrite <- (firstn_skipn p lambda) in H.
     pose (H1 := thm_Zvec_nondecb_app _ _ H).
     tauto.
   Qed.
-  Theorem thm_Zvec_nondecb_tln :
+  Theorem thm_Zvec_nondecb_skipn :
     forall p lambda,
       Zvec_nondecb lambda = true
-      -> Zvec_nondecb (tln p lambda) = true.
+      -> Zvec_nondecb (skipn p lambda) = true.
   Proof.
     intros.
-    rewrite (app_hdn_tln _ p lambda) in H.
+    rewrite <- (firstn_skipn p lambda) in H.
     pose (H1 := thm_Zvec_nondecb_app _ _ H).
     tauto.
   Qed.
@@ -919,7 +919,7 @@ Section leb_total.
     forall mu lambda,
       length mu <= length lambda
       -> Zvec_short_allb Z.leb lambda mu = true
-      -> (total (hdn (length mu) lambda)
+      -> (total (firstn (length mu) lambda)
           <= total mu)%Z.
   Proof.
     induction mu.
@@ -938,7 +938,7 @@ Section leb_total.
       -> Zvec_short_allb Z.leb lambda mu = true
       -> (Zvec_short_allb Z.eqb lambda mu = true
           <-> total mu
-              = total (hdn (length mu) lambda)).
+              = total (firstn (length mu) lambda)).
   Proof.
     intros lambda mu Hlength Hleb.
     split.
@@ -979,7 +979,7 @@ Section leb_total.
     pose (H := thm_Zvec_leb_eqb_tot lambda mu Hlength2 Hleb).
     assert (length lambda <= length mu) as Hlength3.
     { omega. }
-    rewrite (hdn_id _ _ _ Hlength3) in H.
+    rewrite (firstn_id _ _ _ Hlength3) in H.
     rewrite Z.eq_sym_iff, <- H.
     exact (thm_Zvec_eqb_eq lambda mu Hlength).
   Qed.
@@ -1066,11 +1066,11 @@ Section nondecb_total.
     (forall lambda p,
        Zvec_nondecb lambda = true
        -> total lambda = 0
-       -> total (hdn p lambda) <= 0)%Z.
+       -> total (firstn p lambda) <= 0)%Z.
   Proof.
     intros lambda p Hinc Htot.
-    pose (Hval := app_hdn_tln _ p lambda).
-    rewrite Hval in Hinc, Htot.
+    pose (Hval := firstn_skipn p lambda).
+    rewrite <- Hval in Hinc, Htot.
     pose (H := thm_Zvec_nondecb_total_app _ _ Hinc Htot).
     firstorder.
   Qed.

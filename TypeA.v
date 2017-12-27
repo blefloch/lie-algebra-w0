@@ -787,30 +787,30 @@ Section exceptional_from_bounds.
       unfold repeat at 2, map.
       assert (n <= length lambda) as Hlength2.
       { clear - Hlength. omega. }
-      assert (hdn n lambda = repeat a n) as Hhd.
+      assert (firstn n lambda = repeat a n) as Hhd.
       {
-        assert (hd a (hdn n lambda) = a) as Hhdnhd.
+        assert (hd a (firstn n lambda) = a) as Hfirstnhd.
         {
-          rewrite hd_hdn, <- nth_0.
+          rewrite hd_firstn, <- nth_0.
           destruct n ; [clear -Hn ; omega|assumption].
         }
-        assert (a = last (hdn n lambda) a) as Hhdnlast.
+        assert (a = last (firstn n lambda) a) as Hfirstnlast.
         {
           rewrite Hlength, Nat.sub_succ in Hnth1.
-          rewrite last_hdn ; [|assumption].
+          rewrite last_firstn ; [|assumption].
           destruct n ; [trivial|assumption].
         }
         rewrite (thm_Zvec_nondecb_hd_last_eq
-                   _ _ (thm_Zvec_nondecb_hdn n lambda Hinc) Hhdnhd Hhdnlast).
+                   _ _ (thm_Zvec_nondecb_firstn n lambda Hinc) Hfirstnhd Hfirstnlast).
         simpl_length.
         rewrite (min_l _ _ Hlength2).
         trivial.
       }
-      pose (Hlambdaval := app_hdn_tln _ n lambda).
+      pose (Hlambdaval := eq_sym (firstn_skipn n lambda)).
       rewrite Hhd in Hlambdaval.
-      assert (length (tln n lambda) = 1) as Hlength3.
+      assert (length (skipn n lambda) = 1) as Hlength3.
       { simpl_length. omega. }
-      destruct (tln n lambda) as [|x [|]] ;
+      destruct (skipn n lambda) as [|x [|]] ;
         try (clear -Hlength3 ; simpl in *; omega).
       simpl in *.
       assert (x = -a * Z.of_nat n)%Z as Hx.
@@ -915,9 +915,9 @@ Section repeat2_branching.
     simpl in H0.
     autorewrite with rewritelength rewritesome in H0.
     generalize H1, H9.
-    rewrite (app_hdn_tln Z p lambda).
-    set (lam1 := hdn p lambda).
-    set (lam2 := tln p lambda).
+    rewrite <- (firstn_skipn p lambda).
+    set (lam1 := firstn p lambda).
+    set (lam2 := skipn p lambda).
     assert (length lam1 = length (repeat a p)) as H14.
     {
       unfold lam1.
@@ -1054,9 +1054,9 @@ Section repeat2_branching.
     simpl_destruct Hlm as [_ [_ Hlm]].
     assert ((p - 2) <= length lambda) as Hp4.
     { clear -Hq Hlength. omega. }
-    pose (Hlsplit := app_hdn_tln _ (p - 2) lambda).
-    set (mu := hdn _ _) in *.
-    set (nu := tln _ _) in *.
+    pose (Hlsplit := eq_sym (firstn_skipn (p - 2) lambda)).
+    set (mu := firstn _ _) in *.
+    set (nu := skipn _ _) in *.
     rewrite Hlsplit in *.
     assert (length mu = length (repeat a (p - 2))) as Hmulength.
     {
@@ -1093,9 +1093,9 @@ Section repeat2_branching.
     simpl in Hlength.
     assert (q - 2 <= length nu) as Hq4.
     { clear - Hp Hq Hlength. omega. }
-    pose (Hnsplit := app_hdn_tln _ (q - 2) nu).
-    set (rho := hdn _ _) in *.
-    set (sigma := tln _ _) in *.
+    pose (Hnsplit := eq_sym (firstn_skipn (q - 2) nu)).
+    set (rho := firstn _ _) in *.
+    set (sigma := skipn _ _) in *.
     rewrite Hnsplit in *.
     assert (length rho = length (repeat b (q - 2))) as Hrholength.
     {
@@ -1670,23 +1670,23 @@ Section du_main.
         unfold repeat2 in *.
         assert (p <= length lambda) as Hlenp.
         { clear -Hlength. simpl_length in Hlength. omega. }
-        pose (Hlsplit := app_hdn_tln _ p lambda).
+        pose (Hlsplit := eq_sym (firstn_skipn p lambda)).
         rewrite Hlsplit, thm_Zvec_leb_app.
         split.
-        + assert (length (hdn p lambda) = p) as Htmplen.
+        + assert (length (firstn p lambda) = p) as Htmplen.
           { simpl_length. exact (min_l _ _ Hlenp). }
           rewrite <- Htmplen at 1.
           refine (thm_Zvec_nondecb_hd_leb _ _ _ _).
-          * exact (thm_Zvec_nondecb_hdn _ _ Hincl).
+          * exact (thm_Zvec_nondecb_firstn _ _ Hincl).
           * rewrite nth_0 in H0.
-            rewrite hd_hdn, H0.
+            rewrite hd_firstn, H0.
             destruct p ; simpl ; omega.
-        + assert (length (tln p lambda) = 2 + q) as Htmplen.
+        + assert (length (skipn p lambda) = 2 + q) as Htmplen.
           { simpl_length in Hlength ; tac_length. }
           rewrite <- Htmplen at 1.
           refine (thm_Zvec_nondecb_hd_leb _ _ _ _).
-          * exact (thm_Zvec_nondecb_tln _ _ Hincl).
-          * rewrite hd_tln, H1 ; omega.
+          * exact (thm_Zvec_nondecb_skipn _ _ Hincl).
+          * rewrite hd_skipn, H1 ; omega.
         + simpl_length.
           exact (eq_sym (min_l _ _ Hlenp)).
       }
@@ -1707,18 +1707,18 @@ Section du_main.
       simpl_length in Hlength.
       assert (2 + p <= length lambda) as Hlength2.
       { omega. }
-      assert (length (hdn (2 + p) lambda) = 2 + p) as Hlength3.
+      assert (length (firstn (2 + p) lambda) = 2 + p) as Hlength3.
       { autorewrite with rewritelength ; exact (min_l _ _ Hlength2). }
-      assert (length (tln (2 + p) lambda) = q) as Hlength4.
+      assert (length (skipn (2 + p) lambda) = q) as Hlength4.
       { autorewrite with rewritelength ; omega. }
-      pose (Hlambdaval := app_hdn_tln _ (2 + p) lambda).
+      pose (Hlambdaval := eq_sym (firstn_skipn (2 + p) lambda)).
       rewrite Hlambdaval in H0, H1, Hincl.
       rewrite app_nth1 in H0.
       rewrite app_nth2 in H1.
       all : try rewrite Hlength3 in *.
       all : try omega.
       destruct (thm_Zvec_nondecb_app _ _ Hincl) as [Hinchd Hinctl].
-      assert (total (hdn (2 + p) lambda)
+      assert (total (firstn (2 + p) lambda)
               <= total (repeat a (2 + p)))%Z as H3.
       {
         refine (thm_Zvec_leb_total_same_length _ _ _ _).
@@ -1732,7 +1732,7 @@ Section du_main.
           rewrite <- Hlength3 at 2.
           exact (thm_Zvec_nondecb_last_leb2 _ _ H0 Hinchd).
       }
-      assert (total (tln (2 + p) lambda)
+      assert (total (skipn (2 + p) lambda)
               <= total (repeat b q))%Z as H4.
       {
         refine (thm_Zvec_leb_total_same_length _ _ _ _).

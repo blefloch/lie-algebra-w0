@@ -320,6 +320,7 @@ Section mixed.
         all : simpl in *.
         all : destruct mu as [|b1 [|b2 [|b3 [|b4 [|b5 [|b6 [|b7 [|b8 mu]]]]]]]].
         all : try discriminate IHl.
+        Local Opaque Zvec_all_nonnegb.
         all : simpl in *.
         all : destruct lambda as [|a1 [|a2 [|a3 [|a4 [|a5 [|a6 [|a7 [|a8 lambda]]]]]]]].
         all : try discriminate H0.

@@ -2,27 +2,11 @@ Require Import List.
 Require Import ZArith.
 Require Import Nat.
 Open Scope nat_scope.
-(*This file defines hdn, tln, repeat2 and some theorems about lists.*)
+(*This file defines repeat2 and some theorems about lists.*)
 
 Section functions.
   Definition repeat2 (a b : Z) (p q : nat) :=
     repeat a p ++ repeat b q.
-  Fixpoint hdn {A} n (l : list A) :=
-    match n with
-      | 0 => nil
-      | S n' => match l with
-                  | nil => nil
-                  | a::l' => a::(hdn n' l')
-                end
-    end.
-  Fixpoint tln {A} n (l : list A) :=
-    match n with
-      | 0 => l
-      | S n' => match l with
-                  | nil => nil
-                  | a::l' => (tln n' l')
-                end
-    end.
 End functions.
 
 Section basic.
@@ -268,9 +252,9 @@ Section repeat.
   Qed.
 End repeat.
 
-Section hdn_tln.
-  Theorem hdn_id A (l : list A) n :
-    length l <= n -> hdn n l = l.
+Section firstn_skipn.
+  Theorem firstn_id A (l : list A) n :
+    length l <= n -> firstn n l = l.
   Proof.
     generalize n ; clear n.
     induction l.
@@ -280,8 +264,8 @@ Section hdn_tln.
       refine (le_S_n _ _ _).
       assumption.
   Qed.
-  Theorem tln_nil A (l : list A) n :
-    length l <= n -> tln n l = nil.
+  Theorem skipn_nil A (l : list A) n :
+    length l <= n -> skipn n l = nil.
   Proof.
     generalize n ; clear n.
     induction l ; destruct n ; simpl.
@@ -290,32 +274,19 @@ Section hdn_tln.
     - intros H ; contradiction (Nat.nle_succ_0 _ H).
     - intros H ; exact (IHl _ (le_S_n _ _ H)).
   Qed.
-  Theorem app_hdn_tln A n (l : list A) :
-    l = (hdn n l) ++ (tln n l).
-  Proof.
-    generalize l ; clear l.
-    induction n.
-    - simpl ; trivial.
-    - destruct l as [|a l].
-      + simpl ; trivial.
-      + simpl.
-        rewrite <- IHn.
-        trivial.
-  Qed.
-  Theorem hd_hdn A (a : A) n l :
-    hd a (hdn n l) = if n =? 0 then a else hd a l.
+  Theorem hd_firstn A (a : A) n l :
+    hd a (firstn n l) = if n =? 0 then a else hd a l.
   Proof.
     destruct n ; [|destruct l] ; simpl ; intuition.
   Qed.
-  Theorem hd_tln A (a : A) n l :
-    hd a (tln n l) = nth n l a.
+  Theorem hd_skipn A (a : A) n l :
+    hd a (skipn n l) = nth n l a.
   Proof.
     generalize l ; clear l.
     induction n ; destruct l ; simpl ; intuition.
   Qed.
-End hdn_tln.
+End firstn_skipn.
 
-(*TODO: here*)
 Section nth.
   Theorem nth_0 A (a : A) l :
     nth 0 l a = hd a l.
@@ -349,8 +320,8 @@ Section nth.
     all : simpl ; firstorder.
     all : destruct n ; trivial.
   Qed.
-  Theorem nth_hdn1 A (a : A) p q l :
-    p < q -> nth p (hdn q l) a = nth p l a.
+  Theorem nth_firstn1 A (a : A) p q l :
+    p < q -> nth p (firstn q l) a = nth p l a.
   Proof.
     generalize q l ; clear q l.
     induction p.
@@ -376,9 +347,9 @@ Section nth.
         rewrite Nat.sub_0_r in IHl.
         assumption.
   Qed.
-  Theorem last_hdn A (a : A) n l :
+  Theorem last_firstn A (a : A) n l :
     n <= length l
-    -> last (hdn n l) a = if n =? 0 then a else nth (n - 1) l a.
+    -> last (firstn n l) a = if n =? 0 then a else nth (n - 1) l a.
   Proof.
     generalize l ; clear l.
     induction n.
@@ -398,8 +369,8 @@ Section nth.
 End nth.
 
 Section rewrite_length.
-  Theorem length_hdn A n (l : list A) :
-    length (hdn n l) = min n (length l).
+  Theorem length_firstn A n (l : list A) :
+    length (firstn n l) = min n (length l).
   Proof.
     generalize l ; clear l.
     induction n.
@@ -410,8 +381,8 @@ Section rewrite_length.
         rewrite IHn.
         trivial.
   Qed.
-  Theorem length_tln A n (l : list A) :
-    length (tln n l) = length l - n.
+  Theorem length_skipn A n (l : list A) :
+    length (skipn n l) = length l - n.
   Proof.
     generalize l ; clear l.
     induction n.
@@ -465,8 +436,8 @@ Hint Rewrite
      app_length
      repeat_length
      length_removelast
-     length_hdn
-     length_tln
+     length_firstn
+     length_skipn
 : rewritelength.
 Tactic Notation "simpl_length" :=
   repeat (simpl || autorewrite with rewritelength).
