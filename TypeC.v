@@ -105,7 +105,7 @@ Section exceptional_structure.
       unfold n', mu, lie_radical_fundamental_revwt_alg, lie_rank, Zvec_mul.
       rewrite Hi0, Hni, Hmul.
       simpl.
-      rewrite map_app, thm_repeat_map, Z.mul_0_r.
+      rewrite map_app, map_repeat, Z.mul_0_r.
       simpl.
       trivial.
     - right ; right ; left.
@@ -129,7 +129,7 @@ Section exceptional_structure.
         rewrite Hi0, Hni.
         simpl.
         rewrite Heven, Hm1.
-        rewrite map_app, thm_repeat_map, thm_repeat_map.
+        rewrite map_app, map_repeat, map_repeat.
         simpl.
         trivial.
     - right ; right ; right ; left.
@@ -140,7 +140,7 @@ Section exceptional_structure.
       unfold n', mu, lie_radical_fundamental_revwt_alg, lie_rank, Zvec_mul.
       rewrite Hi0, Hni.
       simpl.
-      rewrite map_app, thm_repeat_map.
+      rewrite map_app, map_repeat.
       simpl.
       trivial.
     - rewrite Hmul in *.
@@ -154,7 +154,7 @@ Section exceptional_structure.
         rewrite Hmul at 1.
         rewrite Hi0, Hni.
         simpl.
-        rewrite map_app, thm_repeat_map, Z.mul_0_r.
+        rewrite map_app, map_repeat, Z.mul_0_r.
         simpl.
         trivial.
       + destruct (Sumbool.sumbool_of_bool (1 =? m)%Z) as [H1m|H1m].
@@ -226,7 +226,7 @@ Section exceptional_structure.
     destruct g as [| |[n Hn]| | | | | | ] ;
       try (simpl in Hgtype; discriminate Hgtype).
     simpl in Hrank.
-    rewrite Hval, thm_repeat_cons, <- Hrank.
+    rewrite Hval, cons_repeat, <- Hrank.
     exact (thm_zero_is_exceptional_revwt _).
   Qed.
   Theorem thm_C_prepend_zero_exceptional1 :
@@ -243,7 +243,7 @@ Section exceptional_structure.
       try (simpl in Hgtype; discriminate Hgtype).
     simpl in Hrank.
     exists 1, m.
-    rewrite H, app_comm_cons, thm_repeat_cons, minus_Sn_m, <- Hrank ;
+    rewrite H, app_comm_cons, cons_repeat, minus_Sn_m, <- Hrank ;
       [|
        destruct h as [| |[k Hk]| | | | | | ] ;
          try (simpl in Hhtype; discriminate Hhtype) ;
@@ -258,7 +258,7 @@ Section exceptional_structure.
     + rewrite <- Z.ltb_ge in H0m ; rewrite H0m.
       destruct (m =? 0)%Z ; trivial.
     + unfold Zvec_mul.
-      rewrite map_app, thm_repeat_map, Z.mul_0_r.
+      rewrite map_app, map_repeat, Z.mul_0_r.
       simpl ; trivial.
   Qed.
   Theorem thm_C_prepend_zero_exceptional2 :
@@ -276,7 +276,7 @@ Section exceptional_structure.
       try (simpl in Hgtype; discriminate Hgtype).
     simpl in Hrank.
     exists (2 * j), 1%Z.
-    rewrite H, app_comm_cons, thm_repeat_cons, minus_Sn_m, <- Hrank ; [|omega].
+    rewrite H, app_comm_cons, cons_repeat, minus_Sn_m, <- Hrank ; [|omega].
     unfold is_exceptional_multiplier, lie_radical_fundamental_revwt_alg, lie_embedding_dim, lie_rank.
     assert (2 * j =? 0 = false) as H0.
     { rewrite Nat.eqb_neq. omega. }
@@ -306,13 +306,13 @@ Section exceptional_structure.
       try (simpl in Hgtype; discriminate Hgtype).
     simpl in Hrank.
     exists 2, 2%Z.
-    rewrite H, app_comm_cons, thm_repeat_cons, minus_Sn_m, <- Hrank ; [|omega].
+    rewrite H, app_comm_cons, cons_repeat, minus_Sn_m, <- Hrank ; [|omega].
     unfold is_exceptional_multiplier, lie_radical_fundamental_revwt_alg, lie_embedding_dim, lie_rank, Zvec_mul.
     assert (n <? 2 = false) as H0.
     { rewrite Nat.ltb_ge. omega. }
     rewrite H0.
     simpl.
-    rewrite map_app, thm_repeat_map.
+    rewrite map_app, map_repeat.
     simpl.
     intuition.
   Qed.
@@ -650,7 +650,7 @@ Section main.
       + destruct H as [j [H1j [Hjn H]]].
         assert (2 * j =? 0 = false) as H1.
         { rewrite Nat.eqb_neq. omega. }
-        rewrite H, thm_hd_app, thm_hd_repeat, thm_hd_repeat, H1 in Hahd.
+        rewrite H, hd_app, hd_repeat, hd_repeat, H1 in Hahd.
         assert (a = 0%Z) as H0.
         {
           destruct (_ =? _) in Hahd ;
@@ -661,7 +661,7 @@ Section main.
         refine (thm_C_prepend_zero_exceptional2 g h Hgtype Hhtype Hrank lambda _).
         exists j ; intuition.
       + left.
-        rewrite H, thm_hd_app, thm_hd_repeat in Hahd.
+        rewrite H, hd_app, hd_repeat in Hahd.
         assert (2 <= lie_rank h) as H1.
         { unfold h, lie_rank ; omega. }
         destruct (le_lt_eq_dec _ _ H1) as [Hrkh2|Hrkh2].
@@ -860,32 +860,32 @@ Section main.
     - destruct (thm_C_exceptional_structure h _ Hhtype Hexc)
         as [H|[H|[H|[H|[H|[H|H]]]]]].
       + simpl in H.
-        repeat rewrite list_eq_iff_hd_tl in H.
+        repeat rewrite cons_eq in H.
         omega.
       + destruct H as [m [H0m H]].
         simpl in H.
         destruct n.
         * simpl in *.
-          repeat rewrite list_eq_iff_hd_tl in H.
+          repeat rewrite cons_eq in H.
           destruct H as [_ [Hc H]].
           rewrite Hc, H in *.
           assert (b < m * 2)%Z.
           { destruct HbOdd as [b2 Hb2] ; rewrite Hb2 in * ; omega. }
           show_mixed_by_ideal g (1::1::2::nil)%Z omitted.
         * simpl in H.
-          repeat rewrite list_eq_iff_hd_tl in H.
+          repeat rewrite cons_eq in H.
           omega.
       + destruct H as [j [H1j [Hjn H]]].
         set (t := lie_rank h - 2 * j) in *.
-        destruct t ; [discriminate (thm_cons_eq_repeat _ _ _ _ _ H)|].
-        destruct t ; simpl in H ; repeat rewrite list_eq_iff_hd_tl in H.
+        destruct t ; [discriminate (repeat_spec_hd _ _ _ _ _ H)|].
+        destruct t ; simpl in H ; repeat rewrite cons_eq in H.
         * destruct H as [_ H].
           assert (a::b::c::lambda = repeat 1%Z (2 * S j)) as H1.
           {
             simpl.
-            pose (H1 := thm_cons_eq_repeat _ _ _ _ _ H).
+            pose (H1 := repeat_spec_hd _ _ _ _ _ H).
             rewrite <- plus_n_Sm.
-            repeat (simpl ; rewrite list_eq_iff_hd_tl).
+            repeat (simpl ; rewrite cons_eq).
             intuition.
           }
           rewrite H1 in *.
@@ -899,7 +899,7 @@ Section main.
       + simpl in H.
         destruct n as [|[|]] ; simpl in H.
         * discriminate H.
-        * repeat rewrite list_eq_iff_hd_tl in H.
+        * repeat rewrite cons_eq in H.
           destruct H as [_ [Hc Hlambda]].
           assert (b = 1%Z) as Hb.
           { destruct HbOdd as [b2 Hb2] ; rewrite Hb2 in * ; omega. }
@@ -909,10 +909,10 @@ Section main.
           right.
           refine (mixed_by_hand g _ _).
           compute ; try rewrite Hnval ; tauto.
-        * repeat rewrite list_eq_iff_hd_tl in H.
+        * repeat rewrite cons_eq in H.
           omega.
       + destruct H as [m [H3m H]].
-        repeat rewrite list_eq_iff_hd_tl in H.
+        repeat rewrite cons_eq in H.
         omega.
       + discriminate H.
       + discriminate H.
@@ -1040,12 +1040,12 @@ Section main.
                   [|assumption].
                 destruct (thm_C_exceptional_structure g _ Hgtype Hexc)
                   as [H | [[? [? H]] | [H|[H|[H|[H|H]]]]]].
-                all : repeat (simpl in H ; rewrite list_eq_iff_hd_tl in H).
+                all : repeat (simpl in H ; rewrite cons_eq in H).
                 all : try omega.
                 all : try (destruct HaOdd as [a2 Ha2] ; rewrite Ha2 in * ; omega).
                 + destruct H as [j [H1j [Hjmax H]]].
                   set (t := lie_rank g - 2 * j) in *.
-                  destruct t ; simpl in H ; repeat rewrite list_eq_iff_hd_tl in H.
+                  destruct t ; simpl in H ; repeat rewrite cons_eq in H.
                   * destruct HnEven as [n2 Hn2].
                     simpl in Hlen.
                     rewrite Hn2 in Hlen.
@@ -1150,7 +1150,7 @@ Section main.
                 assert (forall m nu, a'::b'::lambda' <> m::m::nu) as Hconsneq.
                 {
                   intros m nu H.
-                  rewrite list_eq_iff_hd_tl, list_eq_iff_hd_tl in H.
+                  rewrite cons_eq, cons_eq in H.
                   destruct HaOdd as [a2 Ha2].
                   unfold a' in H.
                   rewrite Ha2 in H.
@@ -1162,7 +1162,7 @@ Section main.
                 destruct (thm_C_exceptional_structure g _ Hgtype Hexc)
                   as [H|[H|[H|[H|[H|[H|H]]]]]].
                 + simpl in H.
-                  rewrite list_eq_iff_hd_tl, list_eq_iff_hd_tl in H.
+                  rewrite cons_eq, cons_eq in H.
                   omega.
                 + destruct H as [m [H0m H]].
                   contradiction (Hconsneq _ _ H).
@@ -1185,7 +1185,7 @@ Section main.
                   {
                     rewrite <- H0, Nat.sub_diag in *.
                     simpl in H.
-                    rewrite (thm_cons_eq_repeat _ _ _ _ _ H), <- Z.even_spec, Z.even_1 in Ha'Even.
+                    rewrite (repeat_spec_hd _ _ _ _ _ H), <- Z.even_spec, Z.even_1 in Ha'Even.
                     discriminate Ha'Even.
                   }
                 + destruct HbEven as [b2 Hb2].
@@ -1194,7 +1194,7 @@ Section main.
                   destruct n ;
                   simpl repeat in H;
                   simpl app in H ;
-                  rewrite list_eq_iff_hd_tl, list_eq_iff_hd_tl in H ;
+                  rewrite cons_eq, cons_eq in H ;
                   destruct H as [_ [H _]] ;
                   omega.
                 + destruct H as [m [H3m H]].

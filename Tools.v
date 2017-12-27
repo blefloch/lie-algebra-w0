@@ -140,7 +140,7 @@ Hint Rewrite
      true_eq_true
      or_True_iff
      or_True_iff2
-     list_eq_iff_hd_tl
+     cons_eq
      eq_S_iff
      le_S_n_iff
      lt_S_n_iff
@@ -156,3 +156,7 @@ Tactic Notation "simpl_extra" "in" hyp(H) :=
   repeat (simpl in H || autorewrite with rewritesome in H).
 Tactic Notation "simpl_destruct" hyp(H) "as" simple_intropattern(pattern) :=
   simpl_extra in H ; destruct H as pattern.
+
+Ltac destruct_bool b H :=
+  destruct (Sumbool.sumbool_of_bool b) as [H|H] ;
+  rewrite H.

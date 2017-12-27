@@ -578,14 +578,14 @@ Section exceptional_structure.
     unfold lie_radical_fundamental_revwt_alg, lie_rank, lie_embedding_dim in H0.
     unfold Zvec_mul in H0.
     destruct ((i =? 0) || (n <? i)).
-    - rewrite thm_repeat_map, Zmult_0_r in H0.
+    - rewrite map_repeat, Zmult_0_r in H0.
       rewrite H0.
       autorewrite with rewritelength.
-      rewrite thm_repeat_plus.
+      rewrite repeat_plus.
       exists 0%Z, 0%Z, 1, n.
       pose (H1 := Z.le_refl 0%Z).
       firstorder.
-    - rewrite map_app, thm_repeat_map, thm_repeat_map in H0.
+    - rewrite map_app, map_repeat, map_repeat in H0.
       set (a := (m * _)%Z) in H0.
       set (b := (m * _)%Z) in H0.
       set (p := S n - i) in H0.
@@ -672,7 +672,7 @@ Section exceptional_structure.
     - exact (thm_Zvec_nondecb_repeat a p).
     - exact (thm_Zvec_nondecb_repeat b q).
     - destruct q ; simpl ; trivial.
-      rewrite thm_last_repeat.
+      rewrite last_repeat.
       destruct (p =? 0) ; omega.
   Qed.
   Theorem thm_A_exceptional_structure :
@@ -729,7 +729,7 @@ Section exceptional_structure.
       all : rewrite Z.mul_0_r in Htot.
       all : try rewrite Z.add_0_l in Htot.
       all : try rewrite Z.add_0_r in Htot.
-      all : rewrite (thm_repeat_mul_0 _ _ Htot), <- thm_repeat_plus in Hlambda.
+      all : rewrite (thm_repeat_mul_0 _ _ Htot), <- repeat_plus in Hlambda.
       all : right ; assumption.
     }
     destruct H as [[H1 [H2 [H3 H4]]]|H].
@@ -780,7 +780,7 @@ Section exceptional_from_bounds.
       set (t := Z.gcd _ _) in * ; compute in t ; unfold t in * ; clear t.
       rewrite Zdiv_1_r, Zdiv_1_r, thm_S_minus_1.
       unfold Zvec_mul.
-      rewrite map_app, thm_repeat_map.
+      rewrite map_app, map_repeat.
       rewrite Z.mul_opp_comm.
       set (t := (- - Z.of_nat 1)%Z) in * ; compute in t ; unfold t in * ; clear t.
       rewrite Z.mul_1_r.
@@ -791,13 +791,13 @@ Section exceptional_from_bounds.
       {
         assert (hd a (hdn n lambda) = a) as Hhdnhd.
         {
-          rewrite thm_hd_hdn, <- thm_nth_0_hd.
+          rewrite hd_hdn, <- nth_0.
           destruct n ; [clear -Hn ; omega|assumption].
         }
         assert (a = last (hdn n lambda) a) as Hhdnlast.
         {
           rewrite Hlength, Nat.sub_succ in Hnth1.
-          rewrite thm_last_hdn ; [|assumption].
+          rewrite last_hdn ; [|assumption].
           destruct n ; [trivial|assumption].
         }
         rewrite (thm_Zvec_nondecb_hd_last_eq
@@ -806,7 +806,7 @@ Section exceptional_from_bounds.
         rewrite (min_l _ _ Hlength2).
         trivial.
       }
-      pose (Hlambdaval := thm_hdn_tln _ n lambda).
+      pose (Hlambdaval := app_hdn_tln _ n lambda).
       rewrite Hhd in Hlambdaval.
       assert (length (tln n lambda) = 1) as Hlength3.
       { simpl_length. omega. }
@@ -863,8 +863,8 @@ Section exceptional_from_bounds.
       rewrite H1.
       simpl.
       unfold Zvec_mul.
-      rewrite thm_repeat_map, Z.mul_1_r.
-      rewrite thm_nth_last in Hnth1.
+      rewrite map_repeat, Z.mul_1_r.
+      rewrite nth_last in Hnth1.
       destruct lambda as [|x lambda] ; [clear -Hlength ; simpl in * ; omega |].
       simpl_extra.
       simpl_extra in Hlength.
@@ -874,7 +874,7 @@ Section exceptional_from_bounds.
         refine (thm_Zvec_nondecb_hd_last_eq _ _ _ _ _).
         - exact (thm_Zvec_nondecb_cons _ _ Hinc).
         - simpl in Hnth0.
-          rewrite thm_nth_0_hd in Hnth0.
+          rewrite nth_0 in Hnth0.
           assumption.
         - destruct lambda.
           + trivial.
@@ -909,13 +909,13 @@ Section repeat2_branching.
     simpl tl in H1.
     assert (S (S p) = p + 2) as H7.
     { omega. }
-    rewrite H7, thm_repeat_plus, <- app_assoc in H1.
+    rewrite H7, repeat_plus, <- app_assoc in H1.
     simpl_extra in H2.
     firstorder.
     simpl in H0.
     autorewrite with rewritelength rewritesome in H0.
     generalize H1, H9.
-    rewrite (thm_hdn_tln Z p lambda).
+    rewrite (app_hdn_tln Z p lambda).
     set (lam1 := hdn p lambda).
     set (lam2 := tln p lambda).
     assert (length lam1 = length (repeat a p)) as H14.
@@ -958,7 +958,7 @@ Section repeat2_branching.
     { autorewrite with rewritelength in *. omega. }
     pose (Hlower := thm_Zvec_leb_nth (k - 2) _ _ b b H8 H9 H2).
     pose (Hupper := thm_Zvec_leb_nth k _ _ b b H10 H11 H3).
-    rewrite thm_nth_tl_tl, thm_nth_app_repeat in *.
+    rewrite nth_tl_tl, nth_app_repeat2 in *.
     exact (Z.le_antisymm _ _ Hupper Hlower).
     all : clear -H H0 ; omega.
   Qed.
@@ -994,7 +994,7 @@ Section repeat2_branching.
         simpl tl in *.
         tac_nth_split p lambda a l1 l2 Hlength Ha H12 H13 H14.
         unfold repeat2 in Hml.
-        rewrite thm_repeat_fact1, thm_Zvec_leb_app in Hml ; [|tac_length].
+        rewrite repeat_S_app, thm_Zvec_leb_app in Hml ; [|tac_length].
         simpl_destruct Hml as [_ [H _]].
         rewrite <- H13.
         assumption.
@@ -1013,7 +1013,7 @@ Section repeat2_branching.
         tac_nth_split (p + S q) lambda b l1 l2 Hlength Ha H12 H13 H14.
         unfold repeat2 in Hml.
         rewrite <- (Nat.add_1_r q) in Hml at 1.
-        rewrite thm_repeat_plus, app_assoc, thm_Zvec_leb_app in Hml ; [|tac_length].
+        rewrite repeat_plus, app_assoc, thm_Zvec_leb_app in Hml ; [|tac_length].
         simpl_destruct Hml as [_ H].
         rewrite <- H13.
         assumption.
@@ -1049,12 +1049,12 @@ Section repeat2_branching.
     { clear -Hp. omega. }
     rewrite Hp2 in Hlm.
     rewrite Hp3 in Hml.
-    rewrite thm_repeat_plus in Hlm, Hml.
+    rewrite repeat_plus in Hlm, Hml.
     rewrite <- app_assoc in Hml.
     simpl_destruct Hlm as [_ [_ Hlm]].
     assert ((p - 2) <= length lambda) as Hp4.
     { clear -Hq Hlength. omega. }
-    pose (Hlsplit := thm_hdn_tln _ (p - 2) lambda).
+    pose (Hlsplit := app_hdn_tln _ (p - 2) lambda).
     set (mu := hdn _ _) in *.
     set (nu := tln _ _) in *.
     rewrite Hlsplit in *.
@@ -1087,13 +1087,13 @@ Section repeat2_branching.
     { clear -Hq. omega. }
     rewrite Hq2 in Hlm2.
     rewrite Hq3 in Hml2.
-    rewrite thm_repeat_plus in Hlm2, Hml2.
+    rewrite repeat_plus in Hlm2, Hml2.
     simpl_destruct Hlm2 as [_ [_ Hlm2]].
     simpl_destruct Hml2 as [_ [_ Hml2]].
     simpl in Hlength.
     assert (q - 2 <= length nu) as Hq4.
     { clear - Hp Hq Hlength. omega. }
-    pose (Hnsplit := thm_hdn_tln _ (q - 2) nu).
+    pose (Hnsplit := app_hdn_tln _ (q - 2) nu).
     set (rho := hdn _ _) in *.
     set (sigma := tln _ _) in *.
     rewrite Hnsplit in *.
@@ -1177,11 +1177,11 @@ Section du_radical.
               | [ |- Zvec_nondecb (repeat _ _) = true]
                 => (rewrite thm_Zvec_nondecb_repeat ; trivial)
               | [ |- context[hd _ (repeat _ _)]]
-                => try rewrite thm_hd_repeat
+                => try rewrite hd_repeat
               | [ |- context[hd _ (_++_)]]
-                => try rewrite thm_hd_app
+                => try rewrite hd_app
               | [ |- context[last (repeat _ _)]]
-                => try rewrite thm_last_repeat
+                => try rewrite last_repeat
               | [ |- context[if ?p=?0 then _ else _]]
                 => (destruct p ; simpl ; firstorder) (*Possibly dangerous loop?*)
               | [ |- context[match ?p with 0 => _ | S _ => _ end]]
@@ -1273,7 +1273,7 @@ Section du_branching.
       firstorder.
       refine (thm_Zvec_leb_trans32 _ _ _ _ H12 _).
       + simpl_length ; omega.
-      + rewrite app_comm_cons, thm_cons_repeat_app, <- app_assoc.
+      + rewrite app_comm_cons, cons_repeat_app, <- app_assoc.
         simpl.
         rewrite thm_Zvec_leb_app.
         simpl.
@@ -1285,7 +1285,7 @@ Section du_branching.
       try (clear -H3 ; simpl in * ; progress firstorder).
       tac_nth_split (S p) lambda a l1 l2 H3 H5 H12 H13 H14.
       rewrite app_comm_cons, thm_Zvec_leb_app.
-      rewrite thm_repeat_fact1, thm_Zvec_leb_app in H6.
+      rewrite repeat_S_app, thm_Zvec_leb_app in H6.
       firstorder.
       + clear -H6.
         destruct l1 ; simpl_extra ; simpl_extra in H6 ; firstorder.
@@ -1317,7 +1317,7 @@ Section du_branching.
     - tac_nondecb.
       destruct q.
       all : simpl.
-      all : rewrite thm_last_repeat.
+      all : rewrite last_repeat.
       all : destruct p ; simpl ; omega.
     - simpl_total.
       simpl_total in H9.
@@ -1328,7 +1328,7 @@ Section du_branching.
       firstorder.
       refine (thm_Zvec_leb_trans32 _ _ _ _ H12 _).
       + simpl_length ; omega.
-      + rewrite thm_cons_repeat_app, thm_Zvec_leb_app, thm_Zvec_leb_app.
+      + rewrite cons_repeat_app, thm_Zvec_leb_app, thm_Zvec_leb_app.
         rewrite thm_Zvec_leb_refl, thm_Zvec_leb_refl.
         all : trivial.
         simpl_extra.
@@ -1338,7 +1338,7 @@ Section du_branching.
       tac_nth_split (p + S q) lambda b l1 l2 H3 H5 H12 H13 H14.
       rewrite app_comm_cons, app_assoc, thm_Zvec_leb_app.
       simpl repeat in H6.
-      rewrite (thm_cons_repeat_app _ b q), app_assoc, thm_Zvec_leb_app in H6.
+      rewrite (cons_repeat_app _ b q), app_assoc, thm_Zvec_leb_app in H6.
       firstorder.
       + clear -H6.
         destruct l1 ; simpl_extra ; simpl_extra in H6 ; firstorder.
@@ -1370,7 +1370,7 @@ Section du_branching.
       omega.
     - tac_nth_split p lambda a l1 l2 H3 H5 H12 H13 H14.
       rewrite thm_Zvec_leb_app.
-      rewrite thm_repeat_fact1, thm_Zvec_leb_app in H7.
+      rewrite repeat_S_app, thm_Zvec_leb_app in H7.
       firstorder.
       all : try (rewrite H14 ; simpl_length ; trivial).
       simpl_extra.
@@ -1385,7 +1385,7 @@ Section du_branching.
       simpl in H4.
       simpl_extra in H16.
       all : firstorder.
-    - rewrite thm_repeat_fact1 in H6.
+    - rewrite repeat_S_app in H6.
       tac_nth_split p (tl (tl lambda)) a l1 l2 H3 H5 H12 H13 H14.
       rewrite thm_Zvec_leb_app ; [|rewrite H14 ; tac_length].
       rewrite thm_Zvec_leb_app in H6 ; [|rewrite H14 ; tac_length].
@@ -1436,7 +1436,7 @@ Section du_branching.
       simpl_extra in H15.
       firstorder.
       + rewrite H13 ; omega.
-      + rewrite thm_cons_repeat_app in H16.
+      + rewrite cons_repeat_app in H16.
         tac_nth_split q l2 b l3 l4 H3 H5 H17 H18 H19.
         rewrite thm_Zvec_leb_app ; [|rewrite H19 ; tac_length].
         rewrite thm_Zvec_leb_app in H16 ; [|rewrite H19 ; tac_length].
@@ -1451,7 +1451,7 @@ Section du_branching.
       tac_nth_split (2 + p + q) lambda b l1 l2 H3 H5 H12 H13 H14.
       rewrite app_comm_cons, app_assoc, thm_Zvec_leb_app ; [|rewrite H14 ; tac_length].
       assert (repeat b (S (S q)) = repeat b (S q) ++ b::nil) as Hbq.
-      { simpl. rewrite thm_cons_repeat_app. trivial. }
+      { simpl. rewrite cons_repeat_app. trivial. }
       rewrite Hbq, app_assoc, thm_Zvec_leb_app in H6 ; [|rewrite H14 ; tac_length].
       firstorder.
       + refine (thm_Zvec_leb_trans32 _ _ _ _ _ H6).
@@ -1488,7 +1488,7 @@ Section du_not_exceptional.
     unfold d1u1A in H.
     simpl in H.
     rewrite <- (app_nil_l (b::_)) in H.
-    destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+    destruct (repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
   Qed.
   Theorem thm_d1u2A_not_exceptional :
     forall a b p q g,
@@ -1512,9 +1512,9 @@ Section du_not_exceptional.
       + firstorder.
       + simpl in H.
         rewrite <- (app_nil_l (a::_)) in H.
-        destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+        destruct (repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
     - simpl in H.
-      destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+      destruct (repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
   Qed.
   Theorem thm_d2u1A_not_exceptional_prelim :
     forall p q,
@@ -1549,7 +1549,7 @@ Section du_not_exceptional.
     destruct q ; destruct p ; simpl in H.
     - firstorder.
     - rewrite <- (app_nil_l ((b-1)%Z::_)) in H.
-      destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; [omega|].
+      destruct (repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; [omega|].
       assert (a = -1 /\ b = 1)%Z as [H1 H2] ; [omega|].
       rewrite H1, H2 in Htot.
       pose (H3 := thm_d2u1A_not_exceptional_prelim _ _ Htot).
@@ -1557,7 +1557,7 @@ Section du_not_exceptional.
       omega.
     - rewrite <- (app_nil_l ((b-1)%Z::_)) in H.
       rewrite <- (app_nil_l (b%Z::_)) in H.
-      destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; [|omega].
+      destruct (repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; [|omega].
       assert (a = -1 /\ b = 1)%Z as [H1 H2] ; [omega|].
       rewrite H1, H2 in Htot.
       pose (H3 := thm_d2u1A_not_exceptional_prelim _ _ Htot).
@@ -1565,7 +1565,7 @@ Section du_not_exceptional.
       omega.
     - rewrite <- (app_nil_l (b%Z::_)) in H.
       rewrite (app_comm_cons nil _ (b-1)%Z) in H.
-      destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+      destruct (repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
   Qed.
   Theorem thm_d2u2A_not_exceptional :
     forall a b p q g,
@@ -1584,7 +1584,7 @@ Section du_not_exceptional.
     clear g Hgtype Hexc.
     unfold d2u2A in H.
     simpl in H.
-    destruct (thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
+    destruct (repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ H) as [H0|H0] ; omega.
   Qed.
 End du_not_exceptional.
 
@@ -1670,7 +1670,7 @@ Section du_main.
         unfold repeat2 in *.
         assert (p <= length lambda) as Hlenp.
         { clear -Hlength. simpl_length in Hlength. omega. }
-        pose (Hlsplit := thm_hdn_tln _ p lambda).
+        pose (Hlsplit := app_hdn_tln _ p lambda).
         rewrite Hlsplit, thm_Zvec_leb_app.
         split.
         + assert (length (hdn p lambda) = p) as Htmplen.
@@ -1678,15 +1678,15 @@ Section du_main.
           rewrite <- Htmplen at 1.
           refine (thm_Zvec_nondecb_hd_leb _ _ _ _).
           * exact (thm_Zvec_nondecb_hdn _ _ Hincl).
-          * rewrite thm_nth_0_hd in H0.
-            rewrite thm_hd_hdn, H0.
+          * rewrite nth_0 in H0.
+            rewrite hd_hdn, H0.
             destruct p ; simpl ; omega.
         + assert (length (tln p lambda) = 2 + q) as Htmplen.
           { simpl_length in Hlength ; tac_length. }
           rewrite <- Htmplen at 1.
           refine (thm_Zvec_nondecb_hd_leb _ _ _ _).
           * exact (thm_Zvec_nondecb_tln _ _ Hincl).
-          * rewrite thm_hd_tln_nth, H1 ; omega.
+          * rewrite hd_tln, H1 ; omega.
         + simpl_length.
           exact (eq_sym (min_l _ _ Hlenp)).
       }
@@ -1711,7 +1711,7 @@ Section du_main.
       { autorewrite with rewritelength ; exact (min_l _ _ Hlength2). }
       assert (length (tln (2 + p) lambda) = q) as Hlength4.
       { autorewrite with rewritelength ; omega. }
-      pose (Hlambdaval := thm_hdn_tln _ (2 + p) lambda).
+      pose (Hlambdaval := app_hdn_tln _ (2 + p) lambda).
       rewrite Hlambdaval in H0, H1, Hincl.
       rewrite app_nth1 in H0.
       rewrite app_nth2 in H1.
@@ -1728,7 +1728,7 @@ Section du_main.
           { omega. }
           rewrite H2 in H0.
           rewrite <- Hlength3 in H0 at 1.
-          rewrite thm_nth_last, Z.eq_sym_iff in H0.
+          rewrite nth_last, Z.eq_sym_iff in H0.
           rewrite <- Hlength3 at 2.
           exact (thm_Zvec_nondecb_last_leb2 _ _ H0 Hinchd).
       }
@@ -1740,7 +1740,7 @@ Section du_main.
           omega.
         - assert (1 + p + q - (2 + p) = q - 1) as H2.
           { omega. }
-          rewrite H2, <- Hlength4, thm_nth_last, Z.eq_sym_iff in H1.
+          rewrite H2, <- Hlength4, nth_last, Z.eq_sym_iff in H1.
           rewrite <- Hlength4.
           exact (thm_Zvec_nondecb_last_leb2 _ _ H1 Hinctl).
       }
@@ -1813,7 +1813,7 @@ Section du_zero.
         tac_nth_split (S (S n)) lambda 0%Z l1 l2 Hlen Hlen H12 H13 H14.
         rewrite app_comm_cons, thm_Zvec_leb_app ; [|clear -H14 ; tac_length].
         assert (repeat 0%Z (3 + n) = repeat 0%Z (2 + n) ++ 0%Z::nil) as H7.
-        { rewrite <- thm_cons_repeat_app. trivial. }
+        { rewrite <- cons_repeat_app. trivial. }
         rewrite H7, thm_Zvec_leb_app in H1 ; [|clear -H14 ; tac_length].
         destruct H1 as [H1a H1b].
         split.
@@ -1876,7 +1876,7 @@ Section du_zero.
       unfold nu in Hnu.
       simpl in Hnu.
       rewrite <- (app_nil_l (0%Z::_)) in Hnu.
-      pose (H := thm_repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ Hnu).
+      pose (H := repeat2_fact1 _ _ _ _ _ _ _ _ _ _ _ Hnu).
       clear -H.
       omega.
   Qed.

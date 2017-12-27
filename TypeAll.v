@@ -55,10 +55,10 @@ Section radical_dominant.
     all : repeat rewrite thm_Zvec_nondecb_repeat.
     all : repeat rewrite thm_Zvec_total_repeat.
     all : repeat rewrite repeat_length.
-    all : repeat rewrite repeat_tl.
+    all : repeat rewrite tl_repeat.
     all : repeat rewrite Z.mul_0_r.
     all : repeat rewrite Z.even_0.
-    all : repeat rewrite thm_hd_repeat, thm_if_then_else_same.
+    all : repeat rewrite hd_repeat, thm_if_then_else_same.
     all : repeat rewrite Z.eqb_refl.
     all : repeat rewrite Z.leb_refl.
     all : repeat rewrite Nat.eqb_refl.
@@ -108,8 +108,8 @@ Section radical_dominant.
     all : repeat rewrite Nat.eqb_refl.
     all : repeat rewrite Z.eqb_refl.
     all : repeat rewrite andb_true_l.
-    all : repeat rewrite thm_hd_app.
-    all : repeat rewrite thm_hd_repeat.
+    all : repeat rewrite hd_app.
+    all : repeat rewrite hd_repeat.
     all : try rewrite Hib.
     all : autorewrite with rewritesome.
     all : try rewrite thm_Zvec_nondecb_app_iff.
@@ -121,7 +121,7 @@ Section radical_dominant.
         * simpl ; tauto.
         * assert (forall A (x : A), repeat x (S i) = x::(repeat x i)) as H.
           { tauto. }
-          rewrite H, thm_last_repeat.
+          rewrite H, last_repeat.
           assert (S n - S i <> 0) as H0.
           { omega. }
           rewrite <- Nat.eqb_neq in H0.
@@ -150,14 +150,14 @@ Section radical_dominant.
         omega.
     - split.
       + destruct i ; simpl ; intuition.
-        rewrite thm_last_repeat.
+        rewrite last_repeat.
         destruct (n - S i) ; simpl ; firstorder.
       + destruct (n - i =? 0) ; firstorder.
     - destruct (Nat.Even_or_Odd i).
       + rewrite ((match Nat.even_spec i with conj _ x => x end) H).
         repeat split.
         * destruct i ; simpl ; intuition.
-          rewrite thm_last_repeat.
+          rewrite last_repeat.
           destruct (n - S i) ; simpl ; firstorder.
         * destruct (n - i =? 0) ; firstorder.
         * simpl.
@@ -171,7 +171,7 @@ Section radical_dominant.
         rewrite H2.
         repeat split.
         * destruct i ; simpl ; intuition.
-          rewrite thm_last_repeat.
+          rewrite last_repeat.
           destruct (n - S i) ; simpl ; firstorder.
         * destruct (n - i =? 0) ; firstorder.
         * simpl.
@@ -186,10 +186,10 @@ Section radical_dominant.
         all : try refine (thm_Zvec_nondecb_join _ _ _ _).
         all : try refine (thm_Zvec_nondecb_app2 _ _ _ _ _).
         all : try exact (thm_Zvec_nondecb_repeat _ _).
-        all : try rewrite thm_hd_repeat.
+        all : try rewrite hd_repeat.
         all : try (destruct (n - 1 =? 0) ; omega).
         all : destruct i ; simpl ; intuition.
-        all : rewrite thm_last_repeat.
+        all : rewrite last_repeat.
         all : destruct (n - S i) ; simpl ; firstorder.
       + repeat rewrite (thm_apply_if_then_else _ _ (tl (A := Z))).
         repeat rewrite (thm_apply_if_then_else _ _ (hd 0%Z)).
@@ -198,9 +198,9 @@ Section radical_dominant.
           [destruct (even n) |
            destruct (even i) ; destruct (n - i)].
         all : simpl.
-        all : repeat rewrite repeat_tl.
-        all : repeat rewrite thm_hd_app.
-        all : repeat rewrite thm_hd_repeat.
+        all : repeat rewrite tl_repeat.
+        all : repeat rewrite hd_app.
+        all : repeat rewrite hd_repeat.
         all : try (destruct (i =? 0), (i - 1 =? 0) ; omega).
         all : try (destruct (n0 =? 0), (i =? 0) ; omega).
         all : destruct n as [|[|]] ; simpl ; omega.

@@ -573,7 +573,7 @@ Section nondecb.
       + assert (a::lambda <> nil) as H2.
         { discriminate. }
         rewrite (app_removelast_last z H2) in *.
-        rewrite thm_last_app.
+        rewrite last_app_cons.
         simpl in *.
         rewrite <- app_assoc in H.
         pose (H3 := thm_Zvec_nondecb_app _ _ H).
@@ -629,7 +629,7 @@ Section nondecb.
         assert (b = a) as Haeqb.
         { clear - Hab Hba ; omega. }
         simpl repeat.
-        rewrite list_eq_iff_hd_tl.
+        rewrite cons_eq.
         simpl repeat in IHlambda.
         firstorder.
         refine (IHlambda (thm_Zvec_nondecb_cons _ _ Hinc) _ _).
@@ -642,12 +642,9 @@ Section nondecb.
       -> Zvec_nondecb (hdn p lambda) = true.
   Proof.
     intros.
-    destruct (le_lt_dec p (length lambda)) as [H0|H0].
-    - rewrite (thm_hdn_tln _ p lambda) in H.
-      pose (H1 := thm_Zvec_nondecb_app _ _ H).
-      tauto.
-    - rewrite (thm_hdn_long _ _ _ H0).
-      trivial.
+    rewrite (app_hdn_tln _ p lambda) in H.
+    pose (H1 := thm_Zvec_nondecb_app _ _ H).
+    tauto.
   Qed.
   Theorem thm_Zvec_nondecb_tln :
     forall p lambda,
@@ -655,12 +652,9 @@ Section nondecb.
       -> Zvec_nondecb (tln p lambda) = true.
   Proof.
     intros.
-    destruct (le_lt_dec p (length lambda)) as [H0|H0].
-    - rewrite (thm_hdn_tln _ p lambda) in H.
-      pose (H1 := thm_Zvec_nondecb_app _ _ H).
-      tauto.
-    - rewrite (thm_tln_long _ _ _ H0).
-      trivial.
+    rewrite (app_hdn_tln _ p lambda) in H.
+    pose (H1 := thm_Zvec_nondecb_app _ _ H).
+    tauto.
   Qed.
   Theorem thm_Zvec_nondecb_repeat :
     forall a n, Zvec_nondecb (repeat a n) = true.
@@ -708,7 +702,7 @@ Section nondecb.
     rewrite <- (IHnu (thm_Zvec_nondecb_cons _ _ H)) at 3.
     unfold Zvec_long_min.
     simpl.
-    rewrite list_eq_iff_hd_tl.
+    rewrite cons_eq.
     exact (conj (Z.min_l _ _ (thm_Zvec_nondecb_01_geq _ _ _ H)) eq_refl).
   Qed.
   Theorem thm_Zvec_nondecb_short_max_tl :
@@ -723,7 +717,7 @@ Section nondecb.
     rewrite <- (IHnu (thm_Zvec_nondecb_cons _ _ H)) at 3.
     unfold Zvec_short_max.
     simpl.
-    rewrite list_eq_iff_hd_tl.
+    rewrite cons_eq.
     exact (conj (Z.max_r _ _ (thm_Zvec_nondecb_01_geq _ _ _ H)) eq_refl).
   Qed.
   Theorem thm_Zvec_nondecb_plus_constant :
@@ -883,7 +877,7 @@ Section leb_nondecb.
           exact (thm_Zvec_nondecb_app_hd _ _ _ _ H).
         + exact (IHlambda (thm_Zvec_nondecb_cons _ _ H)).
     }
-    rewrite plus_comm, thm_repeat_plus.
+    rewrite plus_comm, repeat_plus.
     simpl.
     rewrite thm_Zvec_leb_app.
     split.
@@ -990,7 +984,7 @@ Section leb_total.
     pose (H := thm_Zvec_leb_eqb_tot lambda mu Hlength2 Hleb).
     assert (length lambda <= length mu) as Hlength3.
     { omega. }
-    rewrite (thm_hdn_id _ _ _ Hlength3) in H.
+    rewrite (hdn_id _ _ _ Hlength3) in H.
     rewrite Z.eq_sym_iff, <- H.
     exact (thm_Zvec_eqb_eq lambda mu Hlength).
   Qed.
@@ -1080,7 +1074,7 @@ Section nondecb_total.
        -> Zvec_total (hdn p lambda) <= 0)%Z.
   Proof.
     intros lambda p Hinc Htot.
-    pose (Hval := thm_hdn_tln _ p lambda).
+    pose (Hval := app_hdn_tln _ p lambda).
     rewrite Hval in Hinc, Htot.
     pose (H := thm_Zvec_nondecb_total_app _ _ Hinc Htot).
     firstorder.
@@ -1122,7 +1116,7 @@ Tactic Notation "tac_nondecb" :=
                 | [ |- context[hd] ]
                   => simpl_hd
                 | [ |- context[last (repeat _ _)]]
-                  => rewrite thm_last_repeat
+                  => rewrite last_repeat
                 | [ |- context[if ?p=?0 then _ else _]]
                   => (destruct p ; simpl ; try omega) (*Possibly dangerous loop?*)
                 | [ |- _ ]
