@@ -438,11 +438,11 @@ Hint Rewrite
      length_removelast
      length_firstn
      length_skipn
-: rewritelength.
+: list.
 Tactic Notation "simpl_length" :=
-  repeat (simpl || autorewrite with rewritelength).
+  repeat (simpl || autorewrite with list).
 Tactic Notation "simpl_length" "in" hyp(H) :=
-  repeat (simpl in H || autorewrite with rewritelength in H).
+  repeat (simpl in H || autorewrite with list in H).
 Ltac tac_length := simpl_length ; try omega.
 
 Hint Rewrite

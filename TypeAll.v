@@ -101,7 +101,7 @@ Section radical_dominant.
     all : try apply thm_lie_zero_is_radical.
     all : unfold lie_is_radical_revwt_alg, lie_algebra_type, lie_embedding_dim, lie_rank.
     all : unfold lie_is_radical_revwt_type.
-    all : autorewrite with rewritelength rewritetotal.
+    all : autorewrite with list rewritetotal.
     all : repeat rewrite thm_Zvec_nondecb_app_iff.
     all : repeat rewrite thm_Zvec_nondecb_repeat.
     all : repeat (rewrite Nat.sub_add ; [|omega]).

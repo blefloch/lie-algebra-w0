@@ -580,7 +580,7 @@ Section exceptional_structure.
     destruct ((i =? 0) || (n <? i)).
     - rewrite map_repeat, Zmult_0_r in H0.
       rewrite H0.
-      autorewrite with rewritelength.
+      autorewrite with list.
       rewrite repeat_plus.
       exists 0%Z, 0%Z, 1, n.
       pose (H1 := Z.le_refl 0%Z).
@@ -739,7 +739,7 @@ Section exceptional_structure.
       clear -Htot. omega.
     - left.
       rewrite H.
-      autorewrite with rewritelength.
+      autorewrite with list.
       trivial.
   Qed.
 End exceptional_structure.
@@ -913,7 +913,7 @@ Section repeat2_branching.
     simpl_extra in H2.
     firstorder.
     simpl in H0.
-    autorewrite with rewritelength rewritesome in H0.
+    autorewrite with list rewritesome in H0.
     generalize H1, H9.
     rewrite <- (firstn_skipn p lambda).
     set (lam1 := firstn p lambda).
@@ -921,7 +921,7 @@ Section repeat2_branching.
     assert (length lam1 = length (repeat a p)) as H14.
     {
       unfold lam1.
-      autorewrite with rewritelength.
+      autorewrite with list.
       clear -H0.
       simpl_length in H0.
       apply min_l.
@@ -932,7 +932,7 @@ Section repeat2_branching.
     rewrite app_nth1.
     - generalize k, p, a.
       induction k0 ; destruct p0 ; simpl ; trivial.
-    - autorewrite with rewritelength.
+    - autorewrite with list.
       apply lt_S_n, lt_S_n in H.
       assumption.
   Qed.
@@ -955,7 +955,7 @@ Section repeat2_branching.
             /\ k < length lambda
             /\ k < length (repeat a p ++ repeat b q))
       as [H8 [H9 [H10 H11]]].
-    { autorewrite with rewritelength in *. omega. }
+    { autorewrite with list in *. omega. }
     pose (Hlower := thm_Zvec_leb_nth (k - 2) _ _ b b H8 H9 H2).
     pose (Hupper := thm_Zvec_leb_nth k _ _ b b H10 H11 H3).
     rewrite nth_tl_tl, nth_app_repeat2 in *.
@@ -1033,14 +1033,14 @@ Section repeat2_branching.
     autorewrite with rewritesome in H.
     destruct H as [[[[Hlength Hradl] Hradm] Hlm] Hml].
     unfold repeat2 in Hlength.
-    autorewrite with rewritelength in Hlength.
+    autorewrite with list in Hlength.
     assert (length lambda >= 6) as Hlength2.
     {
       rewrite Hlength.
       clear - Hp Hq Hlength. omega.
     }
     destruct lambda as [|l0 [|l1 lambda]] ; simpl in Hlength2 ; try omega.
-    autorewrite with rewritelength rewritesome in Hlength.
+    autorewrite with list rewritesome in Hlength.
     exists l0, l1.
     unfold repeat2 in Hlm, Hml.
     assert (p = 2 + (p - 2)) as Hp2.
@@ -1061,7 +1061,7 @@ Section repeat2_branching.
     assert (length mu = length (repeat a (p - 2))) as Hmulength.
     {
       unfold mu.
-      autorewrite with rewritelength.
+      autorewrite with list.
       rewrite Hlsplit.
       exact (Min.min_l _ _ Hp4).
     }
@@ -1100,7 +1100,7 @@ Section repeat2_branching.
     assert (length rho = length (repeat b (q - 2))) as Hrholength.
     {
       unfold rho.
-      autorewrite with rewritelength.
+      autorewrite with list.
       rewrite Hnsplit.
       exact (Min.min_l _ _ Hq4).
     }
@@ -1261,7 +1261,7 @@ Section du_branching.
       -> Is_known_w0_branching_A_revwt lambda (d1u1A a b p q).
   Proof.
     tac_du_intro p q.
-    - autorewrite with rewritelength in *.
+    - autorewrite with list in *.
       omega.
     - tac_nondecb.
     - simpl_total.
@@ -1311,7 +1311,7 @@ Section du_branching.
       -> Is_known_w0_branching_A_revwt lambda (d1u2A a b p q).
   Proof.
     tac_du_intro p q.
-    - autorewrite with rewritelength in *.
+    - autorewrite with list in *.
       simpl.
       omega.
     - tac_nondecb.
@@ -1361,7 +1361,7 @@ Section du_branching.
       -> Is_known_w0_branching_A_revwt lambda (d2u1A a b p q).
   Proof.
     tac_du_intro p q.
-    - autorewrite with rewritelength in *.
+    - autorewrite with list in *.
       simpl.
       omega.
     - tac_nondecb.
@@ -1400,7 +1400,7 @@ Section du_branching.
       rewrite H16, thm_Zvec_leb_cons in *.
       firstorder.
       refine (thm_Zvec_leb_trans32 _ _ _ _ _ H17).
-      + autorewrite with rewritelength in *.
+      + autorewrite with list in *.
         rewrite H14 in *.
         pose (H18 := eq_refl (length (tl (tl lambda)))).
         rewrite H13 in H18 at 1.
@@ -1421,7 +1421,7 @@ Section du_branching.
       -> Is_known_w0_branching_A_revwt lambda (d2u2A a b p q).
   Proof.
     tac_du_intro p q.
-    - autorewrite with rewritelength in *.
+    - autorewrite with list in *.
       simpl.
       omega.
     - tac_nondecb.
@@ -1708,9 +1708,9 @@ Section du_main.
       assert (2 + p <= length lambda) as Hlength2.
       { omega. }
       assert (length (firstn (2 + p) lambda) = 2 + p) as Hlength3.
-      { autorewrite with rewritelength ; exact (min_l _ _ Hlength2). }
+      { autorewrite with list ; exact (min_l _ _ Hlength2). }
       assert (length (skipn (2 + p) lambda) = q) as Hlength4.
-      { autorewrite with rewritelength ; omega. }
+      { autorewrite with list ; omega. }
       pose (Hlambdaval := eq_sym (firstn_skipn (2 + p) lambda)).
       rewrite Hlambdaval in H0, H1, Hincl.
       rewrite app_nth1 in H0.
@@ -1722,7 +1722,7 @@ Section du_main.
               <= total (repeat a (2 + p)))%Z as H3.
       {
         refine (thm_Zvec_leb_total_same_length _ _ _ _).
-        - autorewrite with rewritelength.
+        - autorewrite with list.
           exact (eq_sym (min_l _ _ Hlength2)).
         - assert (1 + p = 2 + p - 1) as H2.
           { omega. }
@@ -1736,7 +1736,7 @@ Section du_main.
               <= total (repeat b q))%Z as H4.
       {
         refine (thm_Zvec_leb_total_same_length _ _ _ _).
-        - autorewrite with rewritelength.
+        - autorewrite with list.
           omega.
         - assert (1 + p + q - (2 + p) = q - 1) as H2.
           { omega. }
@@ -1766,7 +1766,7 @@ Section du_zero.
     radical_branching_A_two_revwt_b, lie_is_radical_revwt_type.
     intros n lambda H H0.
     autorewrite with rewritesome in *.
-    autorewrite with rewritelength in *.
+    autorewrite with list in *.
     assert (length lambda = length (repeat 0%Z (5 + n))) as Hlen.
     { simpl in H. tac_length. }
     assert (length lambda <= length (repeat 0%Z (5 + n))) as Hlen2.
@@ -1794,7 +1794,7 @@ Section du_zero.
             - exact (eq_sym Hlen).
             - pose (H9 := thm_Zvec_nondecb_hd_leb (0%Z::lambda) 0%Z H5).
               rewrite Hlen in H9.
-              autorewrite with rewritelength in H9.
+              autorewrite with list in H9.
               refine (H9 _).
               simpl.
               omega.
