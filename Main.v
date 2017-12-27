@@ -1,5 +1,5 @@
-Require Import SimpleLieAlgebras.
-Require Import Data.
+Require SimpleLieAlgebras.
+Require Data.
 Require TypeA.
 Require TypeBD.
 Require TypeC.
@@ -8,8 +8,8 @@ Open Scope nat_scope.
 
 Theorem main :
   forall g lambda,
-    lie_is_radical_revwt_alg g lambda = true
-    -> (Is_exceptional_revwt_alg g lambda) \/ (Is_mixed_revwt_alg g lambda).
+    SimpleLieAlgebras.lie_is_radical_revwt_alg g lambda = true
+    -> (Data.Is_exceptional_revwt_alg g lambda) \/ (Data.Is_mixed_revwt_alg g lambda).
 Proof.
   intros g lambda Hrad.
   destruct g.
