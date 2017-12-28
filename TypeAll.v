@@ -212,7 +212,6 @@ Section radical_dominant.
                    rewrite <- Nat.negb_even, negb_true_iff in H2 ;
                    rewrite H2 ;
                    clear H2).
-        all : unfold total ; fold total.
         all : autorewrite with rewritetotal.
         all : destruct H as [u Hu].
         all : rewrite Hu.

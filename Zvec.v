@@ -12,11 +12,7 @@ Open Scope nat_scope.
 (*TODO: look up "fold"*)
 
 Section functions.
-  Fixpoint total lambda :=
-    match lambda with
-      | nil => 0%Z
-      | a::lambda' => (a + total lambda')%Z
-    end.
+  Definition total := fold_right Z.add 0%Z.
   Fixpoint Zvec_short_allb (testb : Z -> Z -> bool) lambda mu :=
     match lambda with
       | nil => true
@@ -732,6 +728,12 @@ Section nondecb.
 End nondecb.
 
 Section total.
+  Theorem thm_total_cons :
+    forall a lambda,
+      total (a::lambda) = (a + total lambda)%Z.
+  Proof.
+    intros ; trivial.
+  Qed.
   Theorem thm_total_app :
     forall lambda mu,
       total (lambda++mu)
@@ -1084,10 +1086,7 @@ Section nondecb_total.
     simpl.
     intros a b lambda H1 H2.
     generalize lambda as lambda0, (thm_Zvec_nondecb_fact1 a b lambda H1 H2).
-    induction lambda0.
-    - unfold total ; firstorder.
-    - simpl_extra.
-      firstorder.
+    induction lambda0 ; simpl_extra ; firstorder.
   Qed.
 End nondecb_total.
 
@@ -1119,6 +1118,7 @@ Tactic Notation "tac_nondecb" :=
               end).
 
 Hint Rewrite
+     thm_total_cons
      thm_total_app
      thm_total_repeat
      thm_Z_of_nat_S

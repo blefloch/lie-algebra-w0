@@ -1014,11 +1014,9 @@ Section main.
                     refine (thm_Zvec_nondecb_cons a (b::lambda) _).
                     tauto.
                   - assumption.
-                  - unfold total.
-                    unfold total in Hradg.
-                    fold (total (b'::lambda')).
-                    fold (total (b::lambda)) in Hradg.
-                    destruct Hradg as [Hlen2 [[Hinc2 H0a2] Heven]].
+                  - destruct Hradg as [Hlen2 [[Hinc2 H0a2] Heven]].
+                    rewrite <- thm_total_cons.
+                    rewrite <- thm_total_cons in Heven.
                     rewrite Hval', thm_total_plus_constant, Z.add_assoc, Z.even_add, Heven, Z.even_mul, thm_Z_of_nat_even.
                     simpl.
                     rewrite <- Nat.even_spec in HnEven.
@@ -1074,8 +1072,7 @@ Section main.
                 repeat split.
                 + tac_length.
                 + tac_nondecb.
-                + unfold total ; fold total.
-                  rewrite thm_total_repeat, Z.add_0_l, Z.mul_1_r, thm_Z_of_nat_even.
+                + rewrite thm_total_cons, thm_total_repeat, Z.add_0_l, Z.mul_1_r, thm_Z_of_nat_even.
                   destruct HnEven as [n2 Hn2].
                   rewrite Hn2 in Hlen.
                   simpl length ; rewrite Hlen.
@@ -1110,16 +1107,13 @@ Section main.
                     rewrite thm_Zvec_nondecb_plus_constant.
                     tauto.
                   - assumption.
-                  - unfold total.
-                    unfold total in Hradg.
-                    fold (total (a'::b'::lambda')).
-                    fold (total (a::b::lambda)) in Hradg.
-                    rewrite <- Hmuval.
+                  - destruct Hradg as [Hlen2 [[Hinc2 H0a2] Heven]].
+                    rewrite <- thm_total_cons, <- thm_total_cons in Heven.
+                    rewrite <- thm_total_cons, <- thm_total_cons, <- Hmuval.
                     unfold mu.
-                    destruct Hradg as [Hlen2 [[Hinc2 H0a2] Heven]].
                     rewrite thm_total_plus_constant, Hlen, Z.even_add, Heven.
-                    unfold lie_embedding_dim, g, lie_rank.
                     rewrite Z.even_mul.
+                    unfold lie_embedding_dim, g, lie_rank.
                     repeat rewrite thm_Z_of_nat_S.
                     autorewrite with rewriteeven.
                     rewrite thm_Z_of_nat_even, (thm_Odd_even_false _ HnOdd).
