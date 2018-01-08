@@ -1206,6 +1206,7 @@ Section main.
                 + clear ; tac_length.
                 + refine (thm_Zvec_nondecb_join _ _ _ _).
                   simpl ; omega.
+                  fold (repeat 1%Z (S (S n))).
                   refine (thm_Zvec_nondecb_repeat _ _).
                 + rewrite thm_total_repeat, thm_Z_of_nat_S, thm_Z_of_nat_S, thm_Z_of_nat_S, Z.mul_1_r.
                   autorewrite with rewriteeven.

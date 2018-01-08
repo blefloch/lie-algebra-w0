@@ -569,6 +569,7 @@ Section nondecb.
         rewrite <- app_assoc in H.
         pose (H3 := thm_Zvec_nondecb_app _ _ H).
         destruct H3 as [H3 H4].
+        rewrite <- app_comm_cons in H4.
         exact (thm_Zvec_nondecb_app_hd _ _ _ _ H4).
     - pose (H := thm_Zvec_nondecb_app2 lambda mu).
       firstorder.
