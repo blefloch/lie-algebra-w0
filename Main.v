@@ -8,8 +8,8 @@ Open Scope nat_scope.
 
 Theorem main :
   forall g lambda,
-    SimpleLieAlgebras.lie_is_radical_revwt_alg g lambda = true
-    -> (Data.Is_exceptional_revwt_alg g lambda) \/ (Data.Is_mixed_revwt_alg g lambda).
+    SimpleLieAlgebras.Is_radical g lambda
+    -> (Data.Is_nonmixed g lambda) \/ (Data.Is_mixed g lambda).
 Proof.
   intros g lambda Hrad.
   destruct g.

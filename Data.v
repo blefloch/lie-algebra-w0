@@ -59,7 +59,7 @@ Section data.
               => (m <=? 2)%Z
           end.
   Definition is_mixed_by_hand_revwt_alg g lambda :=
-    (lie_is_radical_revwt_alg g lambda)
+    (is_radical g lambda)
       && match g, lambda with
            | lie_A (exist _ 2 _), (-1::0::1::nil)%Z => true
            | lie_A (exist _ 3 _), (-1::0::0::1::nil)%Z => true
@@ -132,8 +132,8 @@ Section branching.
   (*Put together all known branchings preserving w0.*)
   (*No need to check ranks of g and h as it is done by the Is_known_... functions.*)
   Definition Is_known_w0_branching_revwt_alg g lambda h mu :=
-    lie_is_radical_revwt_alg g lambda = true
-    /\ lie_is_radical_revwt_alg h mu = true
+    is_radical g lambda = true
+    /\ is_radical h mu = true
     /\ match lie_algebra_type g, lie_algebra_type h with
          | lie_A_type, lie_A_type => Is_known_w0_branching_A_revwt lambda mu
          | lie_B_type, lie_B_type => Is_known_w0_branching_B_revwt lambda mu
@@ -143,24 +143,24 @@ Section branching.
 End branching.
 
 Section main.
-  Definition Is_exceptional_revwt_alg g lambda :=
+  Definition Is_nonmixed g lambda :=
     exists i m,
       (is_exceptional_multiplier g i m = true)
       /\ lambda = Zvec_mul m (lie_radical_fundamental_revwt_alg g i).
-  Inductive Is_mixed_revwt_alg : lie_algebra -> list Z -> Prop :=
+  Inductive Is_mixed : lie_algebra -> list Z -> Prop :=
   | mixed_by_hand :
       forall g lambda,
         is_mixed_by_hand_revwt_alg g lambda = true
-        -> Is_mixed_revwt_alg g lambda
+        -> Is_mixed g lambda
   | mixed_by_ideal :
       forall g lambda mu,
-        Is_mixed_revwt_alg g mu
+        Is_mixed g mu
         -> length lambda = length mu
-        -> lie_is_radical_revwt_alg g (Zvec_short_sub lambda mu) = true
-        -> Is_mixed_revwt_alg g lambda
+        -> is_radical g (Zvec_short_sub lambda mu) = true
+        -> Is_mixed g lambda
   | mixed_by_induction :
       forall g lambda h mu,
-        Is_mixed_revwt_alg h mu
+        Is_mixed h mu
         -> Is_known_w0_branching_revwt_alg g lambda h mu
-        -> Is_mixed_revwt_alg g lambda.
+        -> Is_mixed g lambda.
 End main.

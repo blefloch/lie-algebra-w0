@@ -17,12 +17,12 @@ Section generalities.
   Theorem thm_C_radical_cons_le :
     forall g a lambda,
       lie_algebra_type g = lie_C_type
-      -> lie_is_radical_revwt_alg g (a :: lambda) = true
+      -> is_radical g (a :: lambda) = true
       -> (a <= hd a lambda)%Z.
   Proof.
     intros g a lambda Hgtype.
     destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
-    unfold lie_is_radical_revwt_alg.
+    unfold is_radical.
     simpl_extra.
     intuition.
     destruct lambda ; simpl ; intuition.
@@ -31,25 +31,25 @@ Section generalities.
   Theorem thm_C_radical_total_even :
     forall (g : lie_algebra) (lambda : list Z),
       lie_algebra_type g = lie_C_type
-      -> lie_is_radical_revwt_alg g lambda = true
+      -> is_radical g lambda = true
       -> Z.even (total lambda) = true.
   Proof.
     intros g lambda Hgtype Hrad.
     destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
-    unfold lie_is_radical_revwt_alg in Hrad.
+    unfold is_radical in Hrad.
     simpl_destruct Hrad as [Hlen [[Hinc H0hd] Heven]].
     assumption.
   Qed.
   Theorem thm_C_radical_nondecb :
     forall g lambda,
       lie_algebra_type g = lie_C_type
-      -> lie_is_radical_revwt_alg g lambda = true
+      -> is_radical g lambda = true
       -> Zvec_nondecb lambda = true.
   Proof.
     intros g lambda Hgtype Hrad.
     destruct g as [| |[n Hn]| | | | | | ] ;
       try (simpl in Hgtype; discriminate Hgtype).
-    unfold lie_is_radical_revwt_alg in Hrad.
+    unfold is_radical in Hrad.
     simpl_extra in Hrad.
     intuition.
   Qed.
@@ -59,7 +59,7 @@ Section exceptional_structure.
   Theorem thm_C_exceptional_structure :
     forall g lambda,
       lie_algebra_type g = lie_C_type
-      -> Is_exceptional_revwt_alg g lambda
+      -> Is_nonmixed g lambda
       -> let n := lie_rank g in
          (lambda = repeat 0%Z n)
          \/ (exists m, (0 <= m)%Z /\ lambda = repeat 0%Z (n - 1) ++ (m * 2)%Z::nil)
@@ -220,7 +220,7 @@ Section exceptional_structure.
       -> lie_rank g = 1 + lie_rank h
       -> forall lambda,
            lambda = repeat 0%Z (lie_rank h)
-           -> Is_exceptional_revwt_alg g (0%Z::lambda).
+           -> Is_nonmixed g (0%Z::lambda).
   Proof.
     intros g h Hgtype Hhtype Hrank lambda Hval.
     destruct g as [| |[n Hn]| | | | | | ] ;
@@ -236,7 +236,7 @@ Section exceptional_structure.
       -> lie_rank g = 1 + lie_rank h
       -> forall lambda,
            (exists m, (0 <= m)%Z /\ lambda = repeat 0%Z (lie_rank h - 1) ++ (m * 2)%Z::nil)
-           -> Is_exceptional_revwt_alg g (0%Z::lambda).
+           -> Is_nonmixed g (0%Z::lambda).
   Proof.
     intros g h Hgtype Hhtype Hrank lambda [m [H0m H]].
     destruct g as [| |[n Hn]| | | | | | ] ;
@@ -269,7 +269,7 @@ Section exceptional_structure.
       -> forall lambda,
            (exists j, 1 <= j /\ 2 * j <= lie_rank h
                       /\ lambda = repeat 0%Z (lie_rank h - 2 * j) ++ repeat 1%Z (2 * j))
-           -> Is_exceptional_revwt_alg g (0%Z::lambda).
+           -> Is_nonmixed g (0%Z::lambda).
   Proof.
     intros g h Hgtype Hhtype Hrank lambda [j [H1j [Hjn H]]].
     destruct g as [| |[n Hn]| | | | | | ] ;
@@ -299,7 +299,7 @@ Section exceptional_structure.
       -> forall lambda,
            2 <= lie_rank h
            -> lambda = repeat 0%Z (lie_rank h - 2) ++ 2%Z::2%Z::nil
-           -> Is_exceptional_revwt_alg g (0%Z::lambda).
+           -> Is_nonmixed g (0%Z::lambda).
   Proof.
     intros g h Hgtype Hhtype Hrank lambda Hrkh H.
     destruct g as [| |[n Hn]| | | | | | ] ;
@@ -326,15 +326,15 @@ Section reduction.
       -> lie_rank g = 1 + lie_rank h
       -> forall mu mun,
            Z.Even mun
-           -> lie_is_radical_revwt_alg g (mun::mu) = true
-           -> lie_is_radical_revwt_alg h mu = true.
+           -> is_radical g (mun::mu) = true
+           -> is_radical h mu = true.
   Proof.
     intros g h Hgtype Hhtype Hrank mu mun Heven Hradlambda.
     destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
     destruct h ; try discriminate Hhtype ; destruct s as [m Hm].
     clear Hgtype Hhtype.
     simpl in Hrank.
-    unfold lie_is_radical_revwt_alg, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank in *.
+    unfold is_radical, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank in *.
     repeat (rewrite Bool.andb_true_iff in *)
            || (rewrite Nat.eqb_eq in *)
            || simpl.
@@ -360,8 +360,8 @@ Section reduction.
            (0 <= mun)%Z
            -> (mun <= hd mun mu)%Z
            -> Z.Even mun
-           -> Is_mixed_revwt_alg h mu
-           -> Is_mixed_revwt_alg g (mun::mu).
+           -> Is_mixed h mu
+           -> Is_mixed g (mun::mu).
   Proof.
     intros g h Hgtype Hhtype Hrank mu mun H0 H1 [a Ha] Hmu.
     destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
@@ -371,7 +371,7 @@ Section reduction.
     refine (mixed_by_induction _ _ _ _ Hmu _).
     unfold Is_known_w0_branching_revwt_alg ; simpl.
     pose (Hmurad := thm_mixed_is_radical _ _ Hmu).
-    unfold lie_is_radical_revwt_alg, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank, Is_known_w0_branching_C_revwt in *.
+    unfold is_radical, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank, Is_known_w0_branching_C_revwt in *.
     repeat (rewrite Bool.andb_true_iff in *)
            || (rewrite Nat.eqb_eq in *)
            || simpl.
@@ -396,15 +396,15 @@ Section reduction.
       -> forall mu a b,
            Z.Odd a
            -> Z.Odd b
-           -> lie_is_radical_revwt_alg g (a::b::mu) = true
-           -> lie_is_radical_revwt_alg h (0%Z::mu) = true.
+           -> is_radical g (a::b::mu) = true
+           -> is_radical h (0%Z::mu) = true.
   Proof.
     intros g h Hgtype Hhtype Hrank mu a b HaOdd HbOdd Hradlambda.
     destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
     destruct h ; try discriminate Hhtype ; destruct s as [m Hm].
     clear Hgtype Hhtype.
     simpl in Hrank.
-    unfold lie_is_radical_revwt_alg, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank in *.
+    unfold is_radical, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank in *.
     autorewrite with rewritesome in *.
     simpl in *.
     firstorder.
@@ -429,8 +429,8 @@ Section reduction.
            -> (mun1 <= hd mun1 mu)%Z
            -> Z.Odd mun
            -> Z.Odd mun1
-           -> Is_mixed_revwt_alg h (0%Z::mu)
-           -> Is_mixed_revwt_alg g (mun::mun1::mu).
+           -> Is_mixed h (0%Z::mu)
+           -> Is_mixed g (mun::mun1::mu).
   Proof.
     intros g h Hgtype Hhtype Hrank mu mun mun1 H0 H1 H2 [a Ha] [b Hb] Hmu.
     destruct g ; try discriminate Hgtype ; destruct s as [n Hn].
@@ -440,7 +440,7 @@ Section reduction.
     refine (mixed_by_induction _ _ _ _ Hmu _).
     unfold Is_known_w0_branching_revwt_alg ; simpl.
     pose (Hmurad := thm_mixed_is_radical _ _ Hmu).
-    repeat unfold lie_is_radical_revwt_alg, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank, Is_known_w0_branching_C_revwt in *.
+    repeat unfold is_radical, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank, Is_known_w0_branching_C_revwt in *.
     repeat (rewrite Bool.andb_true_iff in *) || (rewrite Nat.eqb_eq in *).
     destruct Hmurad as [Hlen0m [[Hinc0m _] Heven0m]].
     assert (length (mun1 :: mun :: mu) = n) as Hlen.
@@ -482,17 +482,17 @@ End reduction.
 Ltac show_mixed_by_ideal g mu Hnval :=
   repeat match goal with
            | [ |- _ /\ _ ] => split
-           | [ |- _ \/ Is_mixed_revwt_alg _ _ ]
+           | [ |- _ \/ Is_mixed _ _ ]
              => right ; refine (mixed_by_ideal g _ mu _ _ _)
-           | [ |- Is_mixed_revwt_alg g mu ]
+           | [ |- Is_mixed g mu ]
              => refine (mixed_by_hand g mu _)
            | [ |- is_mixed_by_hand_revwt_alg g mu = true]
              => try exact eq_refl ;
                try (compute ; try rewrite Hnval ; tauto)
            | [ |- length _ = length mu ]
              => exact eq_refl
-           | [ |- lie_is_radical_revwt_alg g (Zvec_short_sub _ mu) = true ]
-             => unfold Zvec_short_sub, lie_is_radical_revwt_alg ;
+           | [ |- is_radical g (Zvec_short_sub _ mu) = true ]
+             => unfold Zvec_short_sub, is_radical ;
                simpl ;
                unfold Zvec_nondecb ;
                simpl_extra
@@ -511,7 +511,7 @@ Ltac show_mixed_by_ideal g mu Hnval :=
 Ltac show_exceptional g i m :=
   repeat match goal with
            | [ |- _ /\ _ ] => split
-           | [ |- Is_exceptional_revwt_alg _ _ \/ _ ]
+           | [ |- Is_nonmixed _ _ \/ _ ]
              => left ; exists i, m
            | [ |- is_exceptional_multiplier g i m = true ]
              => unfold is_exceptional_multiplier ;
@@ -536,12 +536,12 @@ Section C12.
   Theorem thm_main_C1 :
     forall (Hn : 1 > 0) (lambda : list Z),
       let g := lie_C (exist (fun n : nat => n > 0) 1 Hn) in
-      lie_is_radical_revwt_alg g lambda = true
-      -> Is_exceptional_revwt_alg g lambda
-         \/ Is_mixed_revwt_alg g lambda.
+      is_radical g lambda = true
+      -> Is_nonmixed g lambda
+         \/ Is_mixed g lambda.
   Proof.
     intros Hn lambda g Hrad.
-    unfold lie_is_radical_revwt_alg, lie_algebra_type, g, lie_is_radical_revwt_type in Hrad.
+    unfold is_radical, lie_algebra_type, g, lie_is_radical_revwt_type in Hrad.
     repeat rewrite andb_true_iff in *.
     rewrite Nat.eqb_eq, Z.leb_le in *.
     simpl in *.
@@ -564,15 +564,15 @@ Section C12.
   Theorem thm_main_C2 :
     forall (Hn : 2 > 0) (lambda : list Z),
       let g := lie_C (exist (fun n : nat => n > 0) 2 Hn) in
-      lie_is_radical_revwt_alg g lambda = true
-      -> Is_exceptional_revwt_alg g lambda
-         \/ Is_mixed_revwt_alg g lambda.
+      is_radical g lambda = true
+      -> Is_nonmixed g lambda
+         \/ Is_mixed g lambda.
   Proof.
     intros Hn lambda g Hrad.
     pose (Hlen := thm_radical_length _ _ Hrad).
     clearbody Hlen.
     destruct lambda as [|a [|b [|]]] ; simpl in Hlen ; try omega.
-    unfold lie_is_radical_revwt_alg, lie_algebra_type, g, lie_is_radical_revwt_type, Zvec_nondecb, total in Hrad.
+    unfold is_radical, lie_algebra_type, g, lie_is_radical_revwt_type, Zvec_nondecb, total in Hrad.
     simpl in *.
     repeat rewrite andb_true_iff in *.
     repeat rewrite Z.leb_le in *.
@@ -611,20 +611,20 @@ Section main.
            (Hn1 : S (S (S n)) > 0)
            a lambda,
       let g := lie_C (exist (fun n : nat => n > 0) (S (S (S n))) Hn1) in
-      forall (Hradg : lie_is_radical_revwt_alg g (a :: lambda) = true)
+      forall (Hradg : is_radical g (a :: lambda) = true)
              (Hn : S (S n) > 0),
         let h := lie_C (exist (fun n : nat => n > 0) (S (S n)) Hn) in
         (forall lambda : list Z,
-           lie_is_radical_revwt_alg h lambda = true ->
-           Is_exceptional_revwt_alg h lambda \/ Is_mixed_revwt_alg h lambda)
+           is_radical h lambda = true ->
+           Is_nonmixed h lambda \/ Is_mixed h lambda)
         -> lie_algebra_type h = lie_C_type
         -> lie_algebra_type g = lie_C_type
         -> lie_rank g = 1 + lie_rank h
         -> (0 <= a)%Z
         -> (a <= hd a lambda)%Z
         -> Z.Even a
-        -> Is_exceptional_revwt_alg g (a :: lambda) \/
-           Is_mixed_revwt_alg g (a :: lambda).
+        -> Is_nonmixed g (a :: lambda) \/
+           Is_mixed g (a :: lambda).
   Proof.
     intros n Hn1 a lambda g Hradg Hn h IHnHn Hhtype Hgtype Hrank H0a Hahd HaEven.
     destruct (IHnHn lambda (thm_reduction1_radical
@@ -759,7 +759,7 @@ Section main.
   Ltac show_exceptional g i m :=
     repeat match goal with
              | [ |- _ /\ _ ] => split
-             | [ |- Is_exceptional_revwt_alg _ _ \/ _ ]
+             | [ |- Is_nonmixed _ _ \/ _ ]
                => left ; exists i, m
              | [ |- is_exceptional_multiplier g i m = true ]
                => unfold is_exceptional_multiplier, g, lie_embedding_dim, lie_rank ;
@@ -822,12 +822,12 @@ Section main.
            (Hn1 : S (S (S n)) > 0)
            a b lambda,
       let g := lie_C (exist (fun n : nat => n > 0) (S (S (S n))) Hn1) in
-      forall (Hradg : lie_is_radical_revwt_alg g (a::b::lambda) = true)
+      forall (Hradg : is_radical g (a::b::lambda) = true)
              (Hn : S (S n) > 0),
         let h := lie_C (exist (fun n : nat => n > 0) (S (S n)) Hn) in
         (forall lambda : list Z,
-           lie_is_radical_revwt_alg h lambda = true ->
-           Is_exceptional_revwt_alg h lambda \/ Is_mixed_revwt_alg h lambda)
+           is_radical h lambda = true ->
+           Is_nonmixed h lambda \/ Is_mixed h lambda)
         -> lie_algebra_type h = lie_C_type
         -> lie_algebra_type g = lie_C_type
         -> lie_rank g = 1 + lie_rank h
@@ -835,8 +835,8 @@ Section main.
         -> (a <= hd a (b::lambda))%Z
         -> Z.Odd a
         -> Z.Odd b
-        -> Is_exceptional_revwt_alg g (a::b::lambda) \/
-           Is_mixed_revwt_alg g (a::b::lambda).
+        -> Is_nonmixed g (a::b::lambda) \/
+           Is_mixed g (a::b::lambda).
   Proof.
     intros n Hn1 a b lambda g Hradg Hn h IHnHn Hhtype Hgtype Hrank H0a Hahd HaOdd HbOdd.
     pose (Hlen := thm_radical_length _ _ Hradg).
@@ -926,9 +926,9 @@ Section main.
     forall g,
       lie_algebra_type g = lie_C_type
       -> forall lambda,
-           lie_is_radical_revwt_alg g lambda = true
-           -> (Is_exceptional_revwt_alg g lambda)
-              \/ (Is_mixed_revwt_alg g lambda).
+           is_radical g lambda = true
+           -> (Is_nonmixed g lambda)
+              \/ (Is_mixed g lambda).
   Proof.
     intros g Hgtype.
     destruct g as [| |[n Hn]| | | | | | ] ;
@@ -940,7 +940,7 @@ Section main.
     - exact thm_main_C2.
     - intros Hn1 lambda Hradg.
       destruct lambda as [|a lambda].
-      + unfold lie_is_radical_revwt_alg, lie_algebra_type in Hradg.
+      + unfold is_radical, lie_algebra_type in Hradg.
         rewrite Bool.andb_true_iff in Hradg.
         destruct Hradg as [Hlength Hrad].
         discriminate Hlength.
@@ -957,7 +957,7 @@ Section main.
         { simpl ; trivial. }
         assert (0 <= a)%Z as H0a.
         {
-          unfold lie_is_radical_revwt_alg, lie_algebra_type in Hradg.
+          unfold is_radical, lie_algebra_type in Hradg.
           simpl_extra in Hradg.
           tauto.
         }
@@ -1000,11 +1000,11 @@ Section main.
                   destruct HbEven as [b2 Hb2] ; rewrite Hb2.
                   omega.
                 }
-                assert (lie_is_radical_revwt_alg g (a::b'::lambda') = true) as Hradmu.
+                assert (is_radical g (a::b'::lambda') = true) as Hradmu.
                 {
-                  unfold lie_is_radical_revwt_alg.
+                  unfold is_radical.
                   simpl_extra.
-                  unfold lie_is_radical_revwt_alg in Hradg.
+                  unfold is_radical in Hradg.
                   simpl_extra in Hradg.
                   repeat split.
                   - unfold lambda'.
@@ -1066,7 +1066,7 @@ Section main.
               - unfold mu.
                 rewrite thm_Zvec_sub_add_const2.
                 simpl (- -1)%Z.
-                unfold lie_is_radical_revwt_alg, g, lie_is_radical_revwt_type, lie_algebra_type, lie_embedding_dim, lie_rank.
+                unfold is_radical, g, lie_is_radical_revwt_type, lie_algebra_type, lie_embedding_dim, lie_rank.
                 simpl in Hlen ; repeat rewrite eq_S_iff in Hlen.
                 autorewrite with rewritesome.
                 repeat split.
@@ -1092,11 +1092,11 @@ Section main.
                 { destruct HaOdd as [a2 Ha2] ; rewrite Ha2 ; omega. }
                 assert (0 <= a')%Z as H0a'.
                 { unfold a' ; omega. }
-                assert (lie_is_radical_revwt_alg g (a'::b'::lambda') = true) as Hradmu.
+                assert (is_radical g (a'::b'::lambda') = true) as Hradmu.
                 {
-                  unfold lie_is_radical_revwt_alg.
+                  unfold is_radical.
                   simpl_extra.
-                  unfold lie_is_radical_revwt_alg in Hradg.
+                  unfold is_radical in Hradg.
                   simpl_extra in Hradg.
                   repeat split.
                   - unfold lambda'.
@@ -1200,7 +1200,7 @@ Section main.
                 rewrite thm_Zvec_sub_add_const.
                 simpl (- -1)%Z.
                 rewrite Hlen.
-                unfold lie_is_radical_revwt_alg, g, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank.
+                unfold is_radical, g, lie_algebra_type, lie_is_radical_revwt_type, lie_embedding_dim, lie_rank.
                 autorewrite with rewritesome.
                 repeat split.
                 + clear ; tac_length.

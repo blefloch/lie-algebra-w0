@@ -197,9 +197,10 @@ Section lie.
       | lie_F4_type => (length mu =? 4) && (Zvec_all_nonnegb mu)
       | lie_G2_type => (length mu =? 2) && (Zvec_all_nonnegb mu)
     end.
-  Definition lie_is_radical_revwt_alg g mu :=
+  Definition is_radical g mu :=
     ((length mu) =? (lie_embedding_dim g))
       && (lie_is_radical_revwt_type (lie_algebra_type g) mu).
+  Definition Is_radical g mu := is_radical g mu = true.
   Definition lie_radical_fundamental_revwt_alg g i :=
     if (i =? 0) || (lie_rank g <? i)
     then repeat 0%Z (lie_embedding_dim g)
@@ -242,11 +243,11 @@ End lie.
 Section thm.
   Theorem thm_radical_length :
     forall g lambda,
-      lie_is_radical_revwt_alg g lambda = true
+      is_radical g lambda = true
       -> length lambda = lie_embedding_dim g.
   Proof.
     intros g lambda H.
-    unfold lie_is_radical_revwt_alg in H.
+    unfold is_radical in H.
     autorewrite with rewritesome in H.
     firstorder.
   Qed.

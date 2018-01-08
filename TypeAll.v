@@ -24,11 +24,11 @@ Section radical_dominant.
   Qed.
   Theorem thm_radical_dominant :
     forall g lambda,
-      lie_is_radical_revwt_alg g lambda = true
+      is_radical g lambda = true
       -> lie_is_dominant_revwt_alg g lambda = true.
   Proof.
     intros g lambda Hrad.
-    unfold lie_is_radical_revwt_alg, lie_is_dominant_revwt_alg in *.
+    unfold is_radical, lie_is_dominant_revwt_alg in *.
     rewrite Bool.andb_true_iff in *.
     destruct Hrad as [Hlength Hrad].
     split.
@@ -43,14 +43,14 @@ Section radical_dominant.
       all : simpl ; firstorder.
   Qed.
   Theorem thm_lie_zero_is_radical :
-    forall g, lie_is_radical_revwt_alg
+    forall g, is_radical
                 g (repeat 0%Z (lie_embedding_dim g)) = true.
   Proof.
     intros g.
     pose (rk := lie_rank g).
     destruct g as [[n Hn]|[n Hn]|[n Hn]|[n Hn]| | | | |].
     all : simpl in rk.
-    all : unfold lie_is_radical_revwt_alg, lie_embedding_dim,
+    all : unfold is_radical, lie_embedding_dim,
           lie_rank, lie_algebra_type, lie_is_radical_revwt_type.
     all : repeat rewrite thm_Zvec_nondecb_repeat.
     all : repeat rewrite thm_total_repeat.
@@ -84,7 +84,7 @@ Section radical_dominant.
         tauto.
   Qed.
   Theorem thm_lie_fundamental_revwt_is_radical :
-    forall g i, lie_is_radical_revwt_alg
+    forall g i, is_radical
                   g (lie_radical_fundamental_revwt_alg g i) = true.
   Proof.
     intros g i.
@@ -99,7 +99,7 @@ Section radical_dominant.
     all : try rewrite Hnib.
     all : autorewrite with rewritebool.
     all : try apply thm_lie_zero_is_radical.
-    all : unfold lie_is_radical_revwt_alg, lie_algebra_type, lie_embedding_dim, lie_rank.
+    all : unfold is_radical, lie_algebra_type, lie_embedding_dim, lie_rank.
     all : unfold lie_is_radical_revwt_type.
     all : autorewrite with list rewritetotal.
     all : repeat rewrite thm_Zvec_nondecb_app_iff.
@@ -244,14 +244,14 @@ Section exceptional.
     - firstorder.
   Qed.
   Theorem thm_zero_is_exceptional_revwt :
-    forall g, Is_exceptional_revwt_alg g (repeat 0%Z (lie_embedding_dim g)).
+    forall g, Is_nonmixed g (repeat 0%Z (lie_embedding_dim g)).
   Proof.
     intros g.
     exists 1, 0%Z.
     unfold is_exceptional_multiplier.
     rewrite Z.ltb_irrefl, Z.eqb_refl, thm_Zvec_mul_0.
     pose (H := thm_lie_fundamental_revwt_is_radical g 1).
-    unfold lie_is_radical_revwt_alg in H.
+    unfold is_radical in H.
     rewrite andb_true_iff, Nat.eqb_eq in H.
     destruct H as [H _].
     rewrite H.
@@ -262,8 +262,8 @@ End exceptional.
 Section mixed.
   Theorem thm_mixed_is_radical :
     forall g lambda,
-      Is_mixed_revwt_alg g lambda
-      -> lie_is_radical_revwt_alg g lambda = true.
+      Is_mixed g lambda
+      -> is_radical g lambda = true.
   Proof.
     intros g lambda H.
     induction H.
@@ -271,10 +271,10 @@ Section mixed.
       rewrite Bool.andb_true_iff in H.
       destruct H as [H _].
       assumption.
-    - unfold lie_is_radical_revwt_alg in *.
+    - unfold is_radical in *.
       rewrite Bool.andb_true_iff in *.
       destruct H1 as [H1 H2].
-      destruct IHIs_mixed_revwt_alg as [IHl IHrad].
+      destruct IHIs_mixed as [IHl IHrad].
       split.
       + rewrite H0. assumption.
       + destruct g.
